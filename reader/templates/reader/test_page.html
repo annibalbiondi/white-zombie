@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>RSSReader</title>
+  </head>
+
+  <body>
+    <h1>Welcome, {{ user.first_name }}</h1>
+    {% if feeds %}
+    {% for feed in feeds %}
+    <h2>{{ feed.title }}</h2>
+    <h3>{{ feed.description }}</h3>
+    <h4>{{ feed.last_updated }}</h4>
+    <ul>
+      {% for e in entries_received %}
+      {% if e.feed == feed %}
+      <li>
+	<a href="click?user={{ user.email }}&url={{ e.link }}">
+	  {% if e in entries_read %}
+	  {% if e in entries_recommended %}
+	  <strike>{{ e.title }}</strike>
+	  {% else %}
+	  {{ e.title }}
+	  {% endif %}
+	  {% elif e in entries_recommended %}
+	  <em>{{ e.title }}</em>
+	  {% else %}
+	  <strong>{{ e.title }}</strong>
+	  {% endif %}
+	</a>
+      </li>
+      {{ e.description|safe }}
+      <p>{{ e.pub_date }}</p>
+      {% endif %}
+      {% endfor %}
+    </ul>
+    {% endfor %}
+    {% endif %}
+  </body>
+</html>

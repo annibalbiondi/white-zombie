@@ -1,0 +1,19 @@
+#register-link, #login-link {
+    float: right;
+}
+
+.login-form input {
+    width: auto;
+}
+
+.login-form .form-group {
+    display: inline-block;
+}
+
+.login-form .checkbox-link {
+    display: block;
+}
+
+.login-form .checkbox {
+    display: inline;
+}

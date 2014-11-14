@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    {% load staticfiles %}
+    <title>RSSReader - {{ feed.title }}</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/reset.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/dist/css/bootstrap.min.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'reader/css/feed_page.css' %}"/>
+    <script src="{% static 'js/jquery-2.1.1.js' %}"></script>
+    <script src="{% static 'reader/js/feed_page.js' %}"></script>
+  </head>
+
+  <body>
+    <div class="feeds-section">
+      <div class="feed-subscribe">
+	<label for="feed-link">Assinar feed</label>
+	<form method="post" action="/reader/feed">
+	  {% csrf_token %}
+	  <input type="url" id="feed-link" name="feed_link" placeholder="Endereço do feed"/>
+	  <button type="submit">Assinar</button>
+	</form>
+      </div>
+
+      <div class="feed-list"> <!-- TODO tem que por o scroll -->
+	<p>Seus feeds</p>
+	{% for f in feed_list %}
+	<div class="item">
+	  <a href="/reader/feed/{{ f.title }}">
+	    {{ f.title }}
+	  </a>
+	  <!-- TODO adicionar botão para cancelamento de inscrição -->
+	</div>
+	{% endfor %}
+      </div>
+    </div>
+
+    <div class="feed-display">
+      <div class="feed-header">
+	<a href="{{ feed.link }}">{{ feed.title }}</a>
+	<div>
+	  <span>Ordenar por:</span>
+	  <button type="button" class="btn btn-link">Data</button>
+	  <button type="button" class="btn btn-link">Recomendação</button>
+	</div>
+	<p>{{ feed.description }}</p>
+      </div>
+
+      <div class="entry-list">
+	{% for e in entries %}
+	<div class="entry">
+	  <div>
+	    {{ e.title }} {{ e.pub_date }}
+	  </div>
+	  <div>
+	    {{ e.description|safe }}
+	  </div>
+	</div>
+	{% endfor %}
+      </div>
+    </div>
+  </body>
+</html>

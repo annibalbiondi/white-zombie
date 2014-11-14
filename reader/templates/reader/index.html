@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>RSSReader - Bem-vindo</title>
+    {% load staticfiles %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/reset.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/dist/css/bootstrap.min.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'reader/css/index.css' %}"/>
+    <script src="{% static 'js/jquery-2.1.1.js' %}"></script>
+    <script src="{% static 'reader/js/index.js' %}"></script>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="row">
+	<div class="about col-md-6">
+	  <h1>Sobre o RSSReader</h1>
+	  <p>Mussum ipsum cacilds, vidis litro abertis. Consetis adipiscings elitis. Pra lá , depois divoltis porris, paradis. Paisis, filhis, espiritis santis. Mé faiz elementum girarzis, nisi eros vermeio, in elementis mé pra quem é amistosis quis leo. Manduma pindureta quium dia nois paga. Sapien in monti palavris qui num significa nadis i pareci latim. Interessantiss quisso pudia ce receita de bolis, mais bolis eu num gostis.</p>
+	  <p>Suco de cevadiss, é um leite divinis, qui tem lupuliz, matis, aguis e fermentis. Interagi no mé, cursus quis, vehicula ac nisi. Aenean vel dui dui. Nullam leo erat, aliquet quis tempus a, posuere ut mi. Ut scelerisque neque et turpis posuere pulvinar pellentesque nibh ullamcorper. Pharetra in mattis molestie, volutpat elementum justo. Aenean ut ante turpis. Pellentesque laoreet mé vel lectus scelerisque interdum cursus velit auctor. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam ac mauris lectus, non scelerisque augue. Aenean justo massa.</p>
+	  <a href="http://google.com">
+	    <p>Link para o site do projeto</p>
+	  </a>
+	</div>
+
+	<div class="auth-area col-md-6">
+	  <div class="login-screen">
+	    <form class="login-form" method="post" action="/reader/login">
+	      {% csrf_token %}
+	      <div class="form-group">
+		<label class="sr-only" for="login-username">Usuário</label>
+		<input class="form-control" type="text" name="username" id="login-username" placeholder="Usuário"/>
+	      </div>
+	      <div class="form-group">
+		<label class="sr-only" name="password" for="login-password">Senha</label>
+		<input class="form-control" type="password" name="password" id="login-password" placeholder="Senha"/>
+	      </div>
+	      <div class="form-group checkbox-link">
+		<div class="checkbox">
+		  <label>
+		    <input type="checkbox"> Manter-me logado
+		  </label>
+		</div>
+		<button type="button" class="btn btn-link" id="register-link">Nova conta</button>
+	      </div>
+	      <button class="btn btn-default" id="login-submit" type="submit">Entrar</button>
+	    </form>
+	  </div>
+	  
+	  <div class="register-screen">
+	    <form class="register-form form-horizontal" method="post" action="/reader/registration">
+	      {% csrf_token %}
+	      <div class="form-group">
+		<label for="register-username" class="col-md-3 control-label">Usuário:</label>
+		<div class="col-md-9">
+		  <input class="form-control" type="text" name="username" id="register-username" required pattern="[\w@\+-\.]+" minlength="1" maxlength="30"/>
+		</div>
+	      </div>
+	      <div class="form-group">
+		<label for="register-email" class="col-md-3 control-label">Email (opcional):</label>
+		<div class="col-md-9">
+		  <input class="form-control" type="email" name="email" id="register-email"/>
+		</div>
+	      </div>
+	      <div class="form-group">
+		<label for="register-password" class="col-md-3 control-label">Senha:</label>
+		<div class="col-md-9">
+		  <input class="form-control" type="password" name="password" id="register-password" required minlength="6" maxlength="16"/>
+		</div>
+	      </div>
+	      <div class="form-group">
+		<label for="repeat-password" class="col-md-3 control-label">Repita a senha:</label>
+		<div class="col-md-9">
+		  <input class="form-control" type="password" name="repeat-password" id="repeat-password" required minlength="6" maxlength="16"/>
+		</div>
+	      </div>
+	      <div class="form-group">
+		<div class="captcha">
+		</div>
+	      </div>
+	      <div class="form-group">
+		<div class="col-md-offset-3 col-md-9">		
+		  <button class="btn btn-default" id="register-submit" type="submit">Criar conta</button>
+		  <button type="button" class="btn btn-link" id="login-link">Já sou cadastrado</button>
+		</div>
+	      </div>
+	    </form>
+	  </div>
+	</div>
+      </div>
+    </div>
+  </body>
+</html>
