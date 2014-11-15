@@ -1,1 +1,1 @@
-web: gunicorn poc_project.wsgi:reader --log-file -
+web: gunicorn poc_project.wsgi --log-file -
