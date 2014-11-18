@@ -53,7 +53,7 @@ docs/_build/
 # PyBuilder
 target/
 
-# added by me:
-# emacs stuff:
+# Added by me:
+# Emacs stuff:
 *~
 \#*#
