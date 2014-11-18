@@ -1,1 +1,1 @@
-web: gunicorn poc_project.wsgi --log-file -
+web: python manage.py collectstatic --noinput; gunicorn poc_project.wsgi --log-file -
