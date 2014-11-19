@@ -26,15 +26,17 @@
 
 	<div class="auth-area col-md-6">
 	  <div class="login-screen">
-	    <form class="login-form" method="post" action="/reader/login">
+	    <form class="login-form" method="post" action="/reader/">
 	      {% csrf_token %}
 	      <div class="form-group">
+		{{ login_form.username.errors }}
 		<label class="sr-only" for="login-username">Usuário</label>
-		<input class="form-control" type="text" name="username" id="login-username" placeholder="Usuário"/>
+		{{ login_form.username }}
 	      </div>
 	      <div class="form-group">
 		<label class="sr-only" name="password" for="login-password">Senha</label>
-		<input class="form-control" type="password" name="password" id="login-password" placeholder="Senha"/>
+		{{ login_form.password.errors }}
+		{{ login_form.password }}
 	      </div>
 	      <div class="form-group checkbox-link">
 		<div class="checkbox">
@@ -44,29 +46,29 @@
 		</div>
 		<button type="button" class="btn btn-link" id="register-link">Nova conta</button>
 	      </div>
-	      <button class="btn btn-default" id="login-submit" type="submit">Entrar</button>
+	      <button class="btn btn-default" id="login-submit" name="login-submit" type="submit">Entrar</button>
 	    </form>
 	  </div>
 	  
 	  <div class="register-screen">
-	    <form class="register-form form-horizontal" method="post" action="/reader/registration">
+	    <form class="register-form form-horizontal" method="post" action="/reader/">
 	      {% csrf_token %}
 	      <div class="form-group">
 		<label for="register-username" class="col-md-3 control-label">Usuário:</label>
 		<div class="col-md-9">
-		  <input class="form-control" type="text" name="username" id="register-username" required pattern="[\w@\+-\.]+" minlength="1" maxlength="30"/>
+		  {{ register_form.username }}
 		</div>
 	      </div>
 	      <div class="form-group">
 		<label for="register-email" class="col-md-3 control-label">Email (opcional):</label>
 		<div class="col-md-9">
-		  <input class="form-control" type="email" name="email" id="register-email"/>
+		  {{ register_form.email }}
 		</div>
 	      </div>
 	      <div class="form-group">
 		<label for="register-password" class="col-md-3 control-label">Senha:</label>
 		<div class="col-md-9">
-		  <input class="form-control" type="password" name="password" id="register-password" required minlength="6" maxlength="16"/>
+		  {{ register_form.password }}
 		</div>
 	      </div>
 	      <div class="form-group">
@@ -76,13 +78,9 @@
 		</div>
 	      </div>
 	      <div class="form-group">
-		<div class="captcha">
-		</div>
-	      </div>
-	      <div class="form-group">
 		<div class="col-md-offset-3 col-md-9">		
 		  <button class="btn btn-default" id="register-submit" type="submit">Criar conta</button>
-		  <button type="button" class="btn btn-link" id="login-link">Já sou cadastrado</button>
+		  <button type="button" class="btn btn-link" name="register-submit" id="login-link">Já sou cadastrado</button>
 		</div>
 	      </div>
 	    </form>

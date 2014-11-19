@@ -9,49 +9,8 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from reader.naive_bayes import train_classifier, classify
+from reader.forms import RegisterForm, LoginForm
 import feedparser
-
-def user_login(request):
-    context = RequestContext(request)
-
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(username=username, password=password)
-        if user:
-            login(request, user)
-            request.session['user'] = user.username
-            request.session.set_expiry(0)
-            return redirect('/reader/feed')
-        else:
-            # login invalido
-            return HttpResponse('invalid login')
-    else:
-        return render_to_response('/reader', {}, context)
-
-
-def user_registration(request):
-    context = RequestContext(request)
-
-    if request.method == 'POST':
-        username = request.POST['username']
-        email = request.POST['email']
-        password = request.POST['password']
-        
-        if User.objects.filter(username=username):
-            return HttpResponse('already exists')
-        else:
-            user = User.objects.create(username=username, email=email, password=password)
-            user.set_password(user.password)
-            user.save()
-            u = ReaderUser.objects.create(user=user)
-            u.save()
-            request.session['user'] = user.username
-        
-        return HttpResponse('user ' + username + ' created')
-    else:
-        return HttpResponse('no post, no service')
-
 
 def dev(request):
     context = RequestContext(request)
@@ -136,7 +95,47 @@ def user_home(request):
 def index(request):
     context = RequestContext(request)
 
-    context_dict = {}
+    if request.method == 'POST':
+        if 'register-submit' in request.POST:
+            register_form = RegisterForm(request.POST,
+                                         auto_id='register-%s')
+            if register_form.is_valid():
+                user = register_form.save()
+                user.set_password(user.password)
+                user.save()
+                u = ReaderUser.objects.create(user=user)
+                u.save()
+                # login with user
+                user = authenticate(
+                    username=request.POST['username'],
+                    password=request.POST['password'])
+                if user:
+                    login(request, user)
+                    request.session['user'] = user.username
+                    request.session.set_expiry(0)
+                    return redirect('/reader/feed')
+            login_form = LoginForm(auto_id='login-%s')
+        elif 'login-submit' in request.POST:
+            login_form = LoginForm(request.POST,
+                                   auto_id='login-%s')
+            if login_form.is_valid():
+                user = authenticate(
+                    username=request.POST['username'],
+                    password=request.POST['password'])
+                if user:
+                    login(request, user)
+                    request.session['user'] = user.username
+                    request.session.set_expiry(0)
+                    return redirect('/reader/feed')
+            register_form = RegisterForm(auto_id='register-%s')
+    else:
+        register_form = RegisterForm(auto_id='register-%s')
+        login_form = LoginForm(auto_id='login-%s')
+    
+    context_dict = {
+        'register_form': register_form,
+        'login_form': login_form,
+    }
 
     return render_to_response('reader/index.html', context_dict, context)
 
