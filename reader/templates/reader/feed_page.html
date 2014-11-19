@@ -15,11 +15,11 @@
   <body>
     <div class="feeds-section">
       <div class="feed-subscribe">
-	<label for="feed-link">Assinar feed</label>
 	<form method="post" action="/reader/feed">
 	  {% csrf_token %}
-	  <input type="url" id="feed-link" name="feed_link" placeholder="Endereço do feed"/>
-	  <button type="submit">Assinar</button>
+	  <label for="feed-link">Assinar feed</label>
+	  {{ feed_sub_form }}
+	  <button type="submit" name="subscription-submit">Assinar</button>
 	</form>
       </div>
 

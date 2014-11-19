@@ -50,3 +50,9 @@ class LoginForm(forms.Form):
             'class': 'form-control',
             'placeholder': 'Senha',
         }))
+
+class FeedSubscriptionForm(forms.Form):
+    link = forms.URLField(
+        widget=forms.URLInput(
+            attrs={'placeholder': 'Endereço do Feed'}),
+        label='')

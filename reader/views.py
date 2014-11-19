@@ -9,7 +9,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from reader.naive_bayes import train_classifier, classify
-from reader.forms import RegisterForm, LoginForm
+from reader.forms import RegisterForm, LoginForm, FeedSubscriptionForm
 import feedparser
 
 def dev(request):
@@ -155,24 +155,30 @@ def feed_page(request):
     entries = [r.entry for r in entries]
 
     if request.method == 'POST':
-        link = request.POST['feed_link']
-        
-        d = feedparser.parse(link)
-        feed = Feed.objects.get_or_create(
-            title=d.feed.title,
-            link=d.feed.link,
-            description=d.feed.description)[0]
-        feed.save()
-        reader_user = u.reader_user
-        reader_user.feeds.add(feed)
-        reader_user.save()
-        print 'user ' + u.username + ' assinou feed ' + feed.title
+        feed_sub_form = FeedSubscriptionForm(request.POST,
+                                             auto_id='feed-%s')
+        if feed_sub_form.is_valid():
+            d = feedparser.parse(feed_sub_form.cleaned_data['link'])
+            feed = Feed.objects.get_or_create(
+                title=d.feed.title,
+                link=d.feed.link,
+                description=d.feed.description)[0]
+            feed.save()
+            reader_user = u.reader_user
+            reader_user.feeds.add(feed)
+            reader_user.save()
+            print 'user ' + u.username + ' assinou feed ' + feed.title
+            feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
+    else:
+        feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
+                                                 
     
     context_dict = {
         'user': user,
         'feed': feed,
         'feed_list': feed_list,
         'entries': entries,
+        'feed_sub_form': feed_sub_form,
         }
 
     return render_to_response('reader/feed_page.html', context_dict, context)
