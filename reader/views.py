@@ -155,20 +155,28 @@ def feed_page(request):
     entries = [r.entry for r in entries]
 
     if request.method == 'POST':
-        feed_sub_form = FeedSubscriptionForm(request.POST,
-                                             auto_id='feed-%s')
-        if feed_sub_form.is_valid():
-            d = feedparser.parse(feed_sub_form.cleaned_data['link'])
-            feed = Feed.objects.get_or_create(
-                title=d.feed.title,
-                link=d.feed.link,
-                description=d.feed.description)[0]
-            feed.save()
-            reader_user = u.reader_user
-            reader_user.feeds.add(feed)
-            reader_user.save()
-            print 'user ' + u.username + ' assinou feed ' + feed.title
-            feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
+        if 'subscription-submit' in request.POST:
+            feed_sub_form = FeedSubscriptionForm(request.POST,
+                                                 auto_id='feed-%s')
+            if feed_sub_form.is_valid():
+                d = feedparser.parse(feed_sub_form.cleaned_data['link'])
+                feed = Feed.objects.get_or_create(
+                    title=d.feed.title,
+                    link=d.feed.link,
+                    description=d.feed.description)[0]
+                feed.save()
+                reader_user = u.reader_user
+                reader_user.feeds.add(feed)
+                reader_user.save()
+                print 'user ' + u.username + ' assinou feed ' + feed.title
+        elif 'subscription-cancelation' in request.POST:
+            feed_title = request.POST['title']
+            feed_link = request.POST['link']
+            feed_to_unsubscribe = Feed.objects.get(title=feed_title,
+                                                   link=feed_link)
+            user.feeds.remove(feed_to_unsubscribe)
+            user.save()
+        feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
     else:
         feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
                                                  
