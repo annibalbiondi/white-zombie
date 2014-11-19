@@ -153,11 +153,6 @@ def feed_page(request):
     u = User.objects.get(username=request.session['user'])
     user = u.reader_user
     feed_list = user.feeds.all()
-    # como pegar o feed desejado? seu nome esta no URL
-    
-    feed = Feed.objects.get(title='UOL Notícias')
-    entries = user.entries_received.filter(entry__feed=feed).order_by('-entry__pub_date')
-    entries = [r.entry for r in entries]
 
     if request.method == 'POST':
         if 'subscription-submit' in request.POST:
@@ -174,6 +169,8 @@ def feed_page(request):
                 reader_user.feeds.add(feed)
                 reader_user.save()
                 print 'user ' + u.username + ' assinou feed ' + feed.title
+                # TODO criar as entries do feed
+                
         elif 'subscription-cancelation' in request.POST:
             feed_title = request.POST['title']
             feed_link = request.POST['link']
@@ -182,9 +179,16 @@ def feed_page(request):
             user.feeds.remove(feed_to_unsubscribe)
             user.save()
         feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
+    elif request.method == 'GET':
+        feed_title = request.GET['title']
+        feed_link = request.GET['link']
+        feed = Feed.objects.get(title=feed_title, link=feed_link)
+        feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
     else:
         feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
-                                                 
+
+    entries = user.entries_received.filter(entry__feed=feed).order_by('-entry__pub_date')
+    entries = [r.entry for r in entries]
     
     context_dict = {
         'user': user,

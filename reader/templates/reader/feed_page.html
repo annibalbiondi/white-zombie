@@ -26,7 +26,7 @@
 	<p>Seus feeds</p>
 	{% for f in feed_list %}
 	<div class="item">
-	  <a href="/reader/feed/{{ f.title }}">
+	  <a href="{% url 'feed_page' %}?title={{ f.title|urlencode }}&link={{ f.link|urlencode }}">
 	    {{ f.title }}
 	  </a>
 	  <!-- TODO adicionar botão para cancelamento de inscrição -->
