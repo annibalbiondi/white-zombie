@@ -65,5 +65,13 @@
 	{% endfor %}
       </div>
     </div>
+
+    <div class="user-area">
+      <p>{{ user.user.username }}</p>
+      <form method="post" action="/reader/">
+	{% csrf_token %}
+	<button type="submit" name="logout">sair</button>
+      </form>
+    </div>
   </body>
 </html>

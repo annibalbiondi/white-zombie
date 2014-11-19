@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.template import RequestContext
 from django.shortcuts import render_to_response, redirect
 from reader.models import Feed, Entry, ReaderUser, ReadEntry, ReceivedEntry, RecommendedEntry
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from reader.naive_bayes import train_classifier, classify
@@ -128,6 +128,10 @@ def index(request):
                     request.session.set_expiry(0)
                     return redirect('/reader/feed')
             register_form = RegisterForm(auto_id='register-%s')
+        elif 'logout' in request.POST:
+            logout(request)
+            register_form = RegisterForm(auto_id='register-%s')
+            login_form = LoginForm(auto_id='login-%s')
     else:
         register_form = RegisterForm(auto_id='register-%s')
         login_form = LoginForm(auto_id='login-%s')
