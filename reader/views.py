@@ -132,6 +132,8 @@ def index(request):
             logout(request)
             register_form = RegisterForm(auto_id='register-%s')
             login_form = LoginForm(auto_id='login-%s')
+    elif 'user' in request.session:
+        return redirect('/reader/feed')
     else:
         register_form = RegisterForm(auto_id='register-%s')
         login_form = LoginForm(auto_id='login-%s')
@@ -148,7 +150,6 @@ def index(request):
 def feed_page(request):
     context = RequestContext(request)
     
-    # como pegar o usuario? do cookie!
     u = User.objects.get(username=request.session['user'])
     user = u.reader_user
     feed_list = user.feeds.all()
