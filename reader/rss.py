@@ -51,10 +51,11 @@ def fetch_feed(url):
     feed.cloud = cloud
     feed.ttl = ttl
     feed.save()
-    fetch_entries(d, feed)
-
+    entries = fetch_entries(d, feed)
+    return feed
 
 def fetch_entries(d, feed):
+    
     for e in d.entries:
         title = e.get('title', 'No title')
         link = e.get('link', 'http://nolink')
@@ -85,6 +86,7 @@ def fetch_entries(d, feed):
             comments=comments,
             pub_date=pub_date,
             feed=feed)[0]
+        
 
 
 def pt_br_date_handler(date_string):
