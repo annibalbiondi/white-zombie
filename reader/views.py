@@ -1,16 +1,17 @@
 # coding=utf-8
 import locale
 import datetime
+import feedparser
 from django.http import HttpResponse
 from django.template import RequestContext
 from django.shortcuts import render_to_response, redirect
-from reader.models import Feed, Entry, ReaderUser, ReadEntry, ReceivedEntry, RecommendedEntry
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from reader.naive_bayes import train_classifier, classify
 from reader.forms import RegisterForm, LoginForm, FeedSubscriptionForm
-import feedparser
+from reader.models import Feed, Entry, ReaderUser, ReadEntry, ReceivedEntry, RecommendedEntry
+from reader import rss
 
 def dev(request):
     context = RequestContext(request)
@@ -153,23 +154,21 @@ def feed_page(request):
     u = User.objects.get(username=request.session['user'])
     user = u.reader_user
     feed_list = user.feeds.all()
+    feed = None
 
     if request.method == 'POST':
         if 'subscription-submit' in request.POST:
             feed_sub_form = FeedSubscriptionForm(request.POST,
                                                  auto_id='feed-%s')
             if feed_sub_form.is_valid():
-                d = feedparser.parse(feed_sub_form.cleaned_data['link'])
-                feed = Feed.objects.get_or_create(
-                    title=d.feed.title,
-                    link=d.feed.link,
-                    description=d.feed.description)[0]
-                feed.save()
+                feed = rss.fetch_feed(feed_sub_form.cleaned_data['link'])
                 reader_user = u.reader_user
                 reader_user.feeds.add(feed)
+                for e in Entry.objects.filter(feed=feed).order_by('-pub_date')[:100]:
+                    re = ReceivedEntry.objects.get_or_create(entry=e)[0]
+                    re.save()
+                    reader_user.entries_received.add(re)
                 reader_user.save()
-                print 'user ' + u.username + ' assinou feed ' + feed.title
-                # TODO criar as entries do feed
                 
         elif 'subscription-cancelation' in request.POST:
             feed_title = request.POST['title']
@@ -180,15 +179,19 @@ def feed_page(request):
             user.save()
         feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
     elif request.method == 'GET':
-        feed_title = request.GET['title']
-        feed_link = request.GET['link']
-        feed = Feed.objects.get(title=feed_title, link=feed_link)
+        feed_title = request.GET.get('title')
+        feed_link = request.GET.get('link')
+        if (feed_title != None or feed_link != None):
+            feed = Feed.objects.get(title=feed_title, link=feed_link)
         feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
     else:
         feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
 
-    entries = user.entries_received.filter(entry__feed=feed).order_by('-entry__pub_date')
-    entries = [r.entry for r in entries]
+    if feed != None:
+        entries = user.entries_received.filter(entry__feed=feed).order_by('-entry__pub_date')
+        entries = [r.entry for r in entries]
+    else:
+        entries = None
     
     context_dict = {
         'user': user,

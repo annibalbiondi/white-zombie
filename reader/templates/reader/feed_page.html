@@ -42,6 +42,7 @@
     </div>
 
     <div class="feed-display">
+      {% if feed != None %}
       <div class="feed-header">
 	<a href="{{ feed.link }}">{{ feed.title }}</a>
 	<div>
@@ -64,6 +65,19 @@
 	</div>
 	{% endfor %}
       </div>
+      {% else %}
+      <div class="feed-header">
+	<p>Nenhum feed foi selecionado!</p>
+	<div>
+	  <span>Ordenar por:</span>
+	  <button type="button" class="btn btn-link">Data</button>
+	  <button type="button" class="btn btn-link">Recomendação</button>
+	</div>
+	<p>Nada para ver aqui...</p>
+      </div>
+      <div class="entry-list">
+      </div>
+      {% endif %}
     </div>
 
     <div class="user-area">
