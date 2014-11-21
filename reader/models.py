@@ -1,11 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# TODO modificar campos que devem conter datas
-
 class Feed(models.Model):
+    address = models.URLField(primary_key=True)
     title = models.CharField(max_length=128)
-    link = models.URLField(primary_key=True)
+    link = models.URLField()
     description = models.TextField()
     language = models.CharField(max_length=16, null=True)
     copyright_notice = models.CharField(max_length=64, null=True)
