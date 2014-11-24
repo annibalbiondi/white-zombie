@@ -8,7 +8,7 @@ from django.shortcuts import render_to_response, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from reader.naive_bayes import train_classifier, classify
+from reader.classifier import train_classifier, classify
 from reader.forms import RegisterForm, LoginForm, FeedSubscriptionForm
 from reader.models import Feed, Entry, ReaderUser, ReadEntry, ReceivedEntry, RecommendedEntry
 from reader import rss
