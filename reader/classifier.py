@@ -1,9 +1,10 @@
 # coding=utf-8
-import os
 import codecs
-import re
 import locale
-from nltk.classify import NaiveBayesClassifier
+import os
+import random
+import re
+from nltk.classify import NaiveBayesClassifier, PositiveNaiveBayesClassifier
 from nltk.tokenize import word_tokenize
 from reader.models import ReaderUser, Entry, ReadEntry, ReceivedEntry, Feed
 
@@ -43,7 +44,7 @@ def slugify(text):
                              re.LOCALE | re.UNICODE | re.DOTALL))
 
 def get_word_features(user):
-    shown_receipts = user.entries_received.filter(showed_to_user=True)
+    shown_receipts = user.entries_received.all() #.filter(showed_to_user=True)
     
     for r in shown_receipts:
         all_title_words.update(remove_stopwords(
@@ -72,22 +73,48 @@ def extract_features(entry):
     return features
 
 
-def train_classifier(user):
+def train_nb(user, feed=None):
     get_word_features(user)
-    shown_receipts = user.entries_received.filter(showed_to_user=True)
-    # TODO tentar criar um QuerySet ao invés de uma lista
-    user_entries_read = [r.entry for r in user.entries_read.all()]
-    user_featureset = list()
+
+    if (feed == None):
+        shown_receipts = user.entries_received.filter(showed_to_user=True).order_by('-entry__pub_date')[:200]
+        user_entries_read = [r.entry for r in user.entries_read.all()]
+    else:
+        shown_receipts = user.entries_received.filter(entry__feed=feed).filter(showed_to_user=True).order_by('-entry__pub_date')[:200]
+        user_entries_read = [r.entry for r in user.entries_read.filter(entry__feed=feed)]
+
+    sample_size = len(user_entries_read) if len(shown_receipts) <= 100 else 15
+    read_sample = random.choice(user_entries_read, sample_size)
+    unread_entries = [r.entry for r in shown_receipts if r.entry not in user_entries_read]
+    unread_sample = random.choice(unread_entries[], sample_size)
+    user_featureset = []
     
-    print 'entries read'
-    for r in shown_receipts:
-        if r.entry in user_entries_read:
-            user_featureset.append((extract_features(r.entry), 'read'))
-            print r.entry
-        else:
-            user_featureset.append((extract_features(r.entry), 'no_read'))
+    for e in read_sample:
+        user_featureset.append((extract_features(e), 'interesting'))
+    for e in unread_sample:
+        user_featureset.append((extract_features(e), 'not_interesting'))
 
     return NaiveBayesClassifier.train(user_featureset)
+
+
+def train_positivenb(user, feed=None):
+    get_word_features(user)
+
+    if (feed == None):
+        shown_receipts = user.entries_received.filter(showed_to_user=True).order_by('-entry__pub_date')[:200]
+        user_entries_read = [r.entry for r in user.entries_read.all()]
+    else:
+        shown_receipts = user.entries_received.filter(entry__feed=feed).filter(showed_to_user=True).order_by('-entry__pub_date')[:200]
+        user_entries_read = [r.entry for r in user.entries_read.filter(entry__feed=feed)]
+
+    sample_size = len(user_entries_read) if len(shown_receipts) <= 100 else 15
+    read_sample = random.choice(user_entries_read, sample_size)
+    unread_entries = [r.entry for r in shown_receipts if r.entry not in user_entries_read]
+    unread_sample = random.choice(unread_entries, sample_size*3)
+    read_featureset = [extract_features(e) for e in read_sample]
+    unread_featureset = [extract_features(e) for e in unlabeled_sample]
+
+    return PositiveNaiveBayesClassifier.train(read_featureset, unread_featureset)
 
 
 def classify(entry, classifier):
