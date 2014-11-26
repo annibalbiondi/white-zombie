@@ -63,32 +63,30 @@ def dev(request):
 def click(request):
     context = RequestContext(request)
 
-    u = request.session['user']
-    user = u.reader_user
+    user = User.objects.get(username=request.session['user'])
+    reader_user = user.reader_user
     link = request.GET['url']
     clicked_entry = Entry.objects.get(link=link)
-    entryRead = ReadEntry.objects.get_or_create(
-        entry=clicked_entry)[0]
-    user.entries_read.add(entryRead)
-    entryReceived = ReceivedEntry.objects.get(entry=clicked_entry)
-    entryReceived.showed_to_user = True # caso ainda não tenha sido
-    entryReceived.save()
-#    if user.entries_recommended.filter(entry=clicked_entry).exists():
- #       er = user.entries_recommended.get(entry=clicked_entry)
-  #      user.entries_recommended.remove(er)
-   #     er.delete()
-    user.save()
+    readEntry = ReadEntry.objects.get_or_create(
+        entry=clicked_entry, reader_user=reader_user)[0]
+    receivedEntry = ReceivedEntry.objects.get(
+        entry=clicked_entry,
+        reader_user=reader_user)
+    receivedEntry.showed_to_user = True # caso ainda não tenha sido
+    receivedEntry.save()
+    # if user.entries_recommended.filter(entry=clicked_entry).exists():
+    #     er = user.entries_recommended.get(entry=clicked_entry)
+    #     user.entries_recommended.remove(er)
+    #     er.delete()
     return redirect(link)
 
 
+@login_required
 def user_home(request):
     context = RequestContext(request)
-    # TODO conseguir o user
-    context_dict = {
-        'user': user,
-        'feeds': Feed.objects.all(),
-        'entries': Entry.objects.order_by('-pub_date')
-        }
+    user = User.objects.get(username=request.session['user'])
+
+    context_dict = {}
 
     return render_to_response('reader/user_home.html', context_dict, context)
 
@@ -104,8 +102,8 @@ def index(request):
                 user = register_form.save()
                 user.set_password(user.password)
                 user.save()
-                u = ReaderUser.objects.create(user=user)
-                u.save()
+                reader_user = ReaderUser.objects.create(user=user)
+                reader_user.save()
                 # login with user
                 user = authenticate(
                     username=request.POST['username'],
@@ -151,9 +149,9 @@ def index(request):
 def feed_page(request):
     context = RequestContext(request)
     
-    u = User.objects.get(username=request.session['user'])
-    user = u.reader_user
-    feed_list = user.feeds.all()
+    user = User.objects.get(username=request.session['user'])
+    reader_user = user.reader_user
+    feed_list = reader_user.feeds.all()
     feed = None
 
     if request.method == 'POST':
@@ -162,20 +160,18 @@ def feed_page(request):
                                                  auto_id='feed-%s')
             if feed_sub_form.is_valid():
                 feed = rss.fetch_feed(feed_sub_form.cleaned_data['link'])[0]
-                reader_user = u.reader_user
                 reader_user.feeds.add(feed)
                 for e in Entry.objects.filter(feed=feed).order_by('-pub_date')[:100]:
-                    r_entry = ReceivedEntry.objects.get_or_create(entry=e)[0]
-                    r_entry.save()
-                    reader_user.entries_received.add(r_entry)
+                    received_entry = ReceivedEntry.objects.get_or_create(entry=e, reader_user=reader_user)[0]
+                    received_entry.save()
                 reader_user.save()
                 # redirecionar para a página do feed recém-assinado
                 
         elif 'subscription-cancelation' in request.POST:
             feed_address = request.POST['address']
             feed_to_unsubscribe = Feed.objects.get(address=feed_address)
-            user.feeds.remove(feed_to_unsubscribe)
-            user.save()
+            reader_user.feeds.remove(feed_to_unsubscribe)
+            reader_user.save()
         feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
     elif request.method == 'GET':
         feed_address = request.GET.get('address')
@@ -186,13 +182,13 @@ def feed_page(request):
         feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
 
     if feed != None:
-        received_entries = user.entries_received.filter(entry__feed=feed).order_by('-entry__pub_date')
+        received_entries = ReceivedEntry.objects.filter(entry__feed=feed).filter(reader_user=reader_user).order_by('-entry__pub_date')
         entries = [r.entry for r in received_entries]
     else:
         entries = None
 
     if user.entries_read.all().exists():
-        classifier = train_positivenb(user, feed=feed)
+        classifier = train_positivenb(reader_user, feed=feed)
         classifier.show_most_informative_features()
         # classify stuff
         for receipt in received_entries:
@@ -201,14 +197,11 @@ def feed_page(request):
                 receipt.showed_to_user = True
                 receipt.save()
             if label == True:
-                recommended = RecommendedEntry.objects.get_or_create(entry=receipt.entry)[0]
-                recommended.reader_user.add(user)
-                recommended.save()
-                # TODO mudar relação das entradas p/ usuário para 1-n
+                recommended = RecommendedEntry.objects.get_or_create(entry=receipt.entry, reader_user=reader_user)[0]
         # implementar gatilhos de classificação
 
     context_dict = {
-        'user': user,
+        'user': reader_user,
         'feed': feed,
         'feed_list': feed_list,
         'entries': entries,
