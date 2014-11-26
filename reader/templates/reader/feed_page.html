@@ -26,14 +26,12 @@
 	<p>Seus feeds</p>
 	{% for f in feed_list %}
 	<div class="item">
-	  <a href="{% url 'feed_page' %}?title={{ f.title|urlencode }}&link={{ f.link|urlencode }}">
+	  <a href="{% url 'feed_page' %}?address={{ f.address|urlencode }}">
 	    {{ f.title }}
 	  </a>
-	  <!-- TODO adicionar botão para cancelamento de inscrição -->
 	  <form method="post" action="/reader/feed">
 	    {% csrf_token %}
-	    <input type="hidden" name="title" value="{{ f.title }}"/>
-	    <input type="hidden" name="link" value="{{ f.link }}"/>
+	    <input type="hidden" name="address" value="{{ f.address }}"/>
 	    <button type="submit" name="subscription-cancelation">Cancelar</button>
 	  </form>
 	</div>
@@ -57,7 +55,7 @@
 	{% for e in entries %}
 	<div class="entry">
 	  <div>
-	    {{ e.title }} {{ e.pub_date }}
+	    <a href="{% url 'click' %}?url={{ e.link|urlencode }}">{{ e.title }}</a> {{ e.pub_date }}
 	  </div>
 	  <div>
 	    {{ e.description|safe }}

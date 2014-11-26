@@ -8,7 +8,7 @@ from django.shortcuts import render_to_response, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from reader.classifier import train_classifier, classify
+from reader.classification import train_nb, train_positivenb, classify
 from reader.forms import RegisterForm, LoginForm, FeedSubscriptionForm
 from reader.models import Feed, Entry, ReaderUser, ReadEntry, ReceivedEntry, RecommendedEntry
 from reader import rss
@@ -59,11 +59,11 @@ def dev(request):
     # caguei aqui
     return render_to_response('reader/test_page.html', context_dict, context)
 
-
+@login_required
 def click(request):
     context = RequestContext(request)
 
-    u = User.objects.get(email=request.GET['user'])
+    u = request.session['user']
     user = u.reader_user
     link = request.GET['url']
     clicked_entry = Entry.objects.get(link=link)
@@ -71,7 +71,7 @@ def click(request):
         entry=clicked_entry)[0]
     user.entries_read.add(entryRead)
     entryReceived = ReceivedEntry.objects.get(entry=clicked_entry)
-    entryReceived.showed_to_user = True
+    entryReceived.showed_to_user = True # caso ainda não tenha sido
     entryReceived.save()
 #    if user.entries_recommended.filter(entry=clicked_entry).exists():
  #       er = user.entries_recommended.get(entry=clicked_entry)
@@ -161,38 +161,52 @@ def feed_page(request):
             feed_sub_form = FeedSubscriptionForm(request.POST,
                                                  auto_id='feed-%s')
             if feed_sub_form.is_valid():
-                feed = rss.fetch_feed(feed_sub_form.cleaned_data['link'])
+                feed = rss.fetch_feed(feed_sub_form.cleaned_data['link'])[0]
                 reader_user = u.reader_user
                 reader_user.feeds.add(feed)
                 for e in Entry.objects.filter(feed=feed).order_by('-pub_date')[:100]:
-                    re = ReceivedEntry.objects.get_or_create(entry=e)[0]
-                    re.save()
-                    reader_user.entries_received.add(re)
+                    r_entry = ReceivedEntry.objects.get_or_create(entry=e)[0]
+                    r_entry.save()
+                    reader_user.entries_received.add(r_entry)
                 reader_user.save()
+                # redirecionar para a página do feed recém-assinado
                 
         elif 'subscription-cancelation' in request.POST:
-            feed_title = request.POST['title']
-            feed_link = request.POST['link']
-            feed_to_unsubscribe = Feed.objects.get(title=feed_title,
-                                                   link=feed_link)
+            feed_address = request.POST['address']
+            feed_to_unsubscribe = Feed.objects.get(address=feed_address)
             user.feeds.remove(feed_to_unsubscribe)
             user.save()
         feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
     elif request.method == 'GET':
-        feed_title = request.GET.get('title')
-        feed_link = request.GET.get('link')
-        if (feed_title != None or feed_link != None):
-            feed = Feed.objects.get(title=feed_title, link=feed_link)
+        feed_address = request.GET.get('address')
+        if (feed_address != None):
+            feed = Feed.objects.get(address=feed_address)
         feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
     else:
         feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
 
     if feed != None:
-        entries = user.entries_received.filter(entry__feed=feed).order_by('-entry__pub_date')
-        entries = [r.entry for r in entries]
+        received_entries = user.entries_received.filter(entry__feed=feed).order_by('-entry__pub_date')
+        entries = [r.entry for r in received_entries]
     else:
         entries = None
-    
+
+    if user.entries_read.all().exists():
+        classifier = train_positivenb(user, feed=feed)
+        classifier.show_most_informative_features()
+        # classify stuff
+        for receipt in received_entries:
+            label = classify(receipt.entry, classifier)
+            if receipt.showed_to_user == False:
+                receipt.showed_to_user = True
+                receipt.save()
+            if label == True:
+                recommended = RecommendedEntry.objects.get_or_create(entry=receipt.entry)[0]
+                recommended.reader_user.add(user)
+                recommended.save()
+                # TODO mudar relação das entradas p/ usuário para 1-n
+        # implementar gatilhos de classificação
+
     context_dict = {
         'user': user,
         'feed': feed,
