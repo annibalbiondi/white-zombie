@@ -184,21 +184,22 @@ def feed_page(request):
     if feed != None:
         received_entries = ReceivedEntry.objects.filter(entry__feed=feed).filter(reader_user=reader_user).order_by('-entry__pub_date')
         entries = [r.entry for r in received_entries]
+    
+        if ReadEntry.objects.filter(reader_user=reader_user, entry__feed=feed).exists():
+            classifier = train_positivenb(reader_user, feed=feed)
+            classifier.show_most_informative_features()
+            # classify stuff
+            for receipt in received_entries:
+                label = classify(receipt.entry, classifier)
+                if receipt.showed_to_user == False:
+                    receipt.showed_to_user = True
+                    receipt.save()
+                    if label == True:
+                        recommended = RecommendedEntry.objects.get_or_create(entry=receipt.entry, reader_user=reader_user)[0]
+                        print recommended.entry
+                        # implementar gatilhos de classificação
     else:
         entries = None
-
-    if user.entries_read.all().exists():
-        classifier = train_positivenb(reader_user, feed=feed)
-        classifier.show_most_informative_features()
-        # classify stuff
-        for receipt in received_entries:
-            label = classify(receipt.entry, classifier)
-            if receipt.showed_to_user == False:
-                receipt.showed_to_user = True
-                receipt.save()
-            if label == True:
-                recommended = RecommendedEntry.objects.get_or_create(entry=receipt.entry, reader_user=reader_user)[0]
-        # implementar gatilhos de classificação
 
     context_dict = {
         'user': reader_user,
