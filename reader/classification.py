@@ -137,7 +137,7 @@ def train_positivenb(user, feed=None):
         unread_entries = ReceivedEntry.objects.filter(
             reader_user=user).exclude(id__in=[r.id for r in user_entries_read]).order_by('-entry__pub_date')[:200]
         unread_entries = [r.entry for r in unread_entries]
-    unread_sample = random.sample(unread_entries, sample_size*3)
+    unread_sample = random.sample(unread_entries, sample_size*2)
     read_featureset = [extract_features(e) for e in read_sample]
     unread_featureset = [extract_features(e) for e in unread_sample]
 

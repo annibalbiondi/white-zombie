@@ -194,10 +194,10 @@ def feed_page(request):
                 if receipt.showed_to_user == False:
                     receipt.showed_to_user = True
                     receipt.save()
-                    if label == True:
-                        recommended = RecommendedEntry.objects.get_or_create(entry=receipt.entry, reader_user=reader_user)[0]
-                        print recommended.entry
-                        # implementar gatilhos de classificação
+                if label == True:
+                    recommended = RecommendedEntry.objects.get_or_create(entry=receipt.entry, reader_user=reader_user)[0]
+                    print recommended.entry
+                    # implementar gatilhos de classificação
     else:
         entries = None
 
