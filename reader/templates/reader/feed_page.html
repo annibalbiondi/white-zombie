@@ -24,6 +24,10 @@
 
       <div class="feed-list"> <!-- TODO tem que por o scroll -->
 	<p>Seus feeds</p>
+	<form method="post" action="/reader/feed">
+	  {% csrf_token %}
+	  <button type="submit" name="update-feeds">Atualizar</button>
+	</form>
 	{% for f in feed_list %}
 	<div class="item">
 	  <a href="{% url 'feed_page' %}?address={{ f.address|urlencode }}">
@@ -55,13 +59,34 @@
 	{% for e in entries %}
 	<div class="entry">
 	  <div>
-	    <a href="{% url 'click' %}?url={{ e.link|urlencode }}">{{ e.title }}</a> {{ e.pub_date }}
+	    <a href="{% url 'click' %}?url={{ e.link|urlencode }}">
+	      {% if e.entry in recommended_entries %}
+	      ***{{ e.entry.title }}***
+	      {% else %}
+	      {{ e.entry.title }}
+	      {% endif %}
+	    </a> {{ e.entry.pub_date }}
 	  </div>
 	  <div>
-	    {{ e.description|safe }}
+	    {{ e.entry.description|safe }}
 	  </div>
 	</div>
 	{% endfor %}
+	<div class="pagination">
+	  <span class="step-links">
+            {% if entries.has_previous %}
+            <a href="?address={{ feed.address }}&page={{ entries.previous_page_number }}">anterior</a>
+            {% endif %}
+
+            <span class="current">
+              Page {{ entries.number }} of {{ entries.paginator.num_pages }}.
+            </span>
+
+            {% if entries.has_next %}
+            <a href="?address={{ feed.address }}&page={{ entries.next_page_number }}">próximo</a>
+            {% endif %}
+	  </span>
+	</div>
       </div>
       {% else %}
       <div class="feed-header">

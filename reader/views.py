@@ -8,6 +8,7 @@ from django.shortcuts import render_to_response, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from reader.classification import train_nb, train_positivenb, classify
 from reader.forms import RegisterForm, LoginForm, FeedSubscriptionForm
 from reader.models import Feed, Entry, ReaderUser, ReadEntry, ReceivedEntry, RecommendedEntry
@@ -153,6 +154,9 @@ def feed_page(request):
     reader_user = user.reader_user
     feed_list = reader_user.feeds.all()
     feed = None
+    recommended_entries = []
+    to_be_shown2 = None
+    page = None
 
     if request.method == 'POST':
         if 'subscription-submit' in request.POST:
@@ -172,41 +176,71 @@ def feed_page(request):
             feed_to_unsubscribe = Feed.objects.get(address=feed_address)
             reader_user.feeds.remove(feed_to_unsubscribe)
             reader_user.save()
+        elif 'update-feeds' in request.POST:
+            rss.update_feeds()
         feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
     elif request.method == 'GET':
         feed_address = request.GET.get('address')
-        if (feed_address != None):
+        page = request.GET.get('page')
+        if feed_address != None:
             feed = Feed.objects.get(address=feed_address)
         feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
     else:
         feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
 
     if feed != None:
-        received_entries = ReceivedEntry.objects.filter(entry__feed=feed).filter(reader_user=reader_user).order_by('-entry__pub_date')
-        entries = [r.entry for r in received_entries]
+        received_entries = ReceivedEntry.objects.filter(
+            entry__feed=feed,
+            reader_user=reader_user).order_by('-entry__pub_date')
+        paginator = Paginator(received_entries, 15)
+
+        try:
+            to_be_shown2 = paginator.page(page)
+        except PageNotAnInteger:
+            to_be_shown2 = paginator.page(1)
+        except EmptyPage:
+            to_be_shown2 = paginator.page(paginator.num_pages)
+
+        #if page == None:
+        #    if len(received_entries) >= 15:
+        #        to_be_shown = received_entries[0:15]
+        #    else:
+        #        to_be_shown = received_entries[0:len(received_entries)]
+        #else:
+        #    page = int(page)
+        #    if len(received_entries) >= 15*page:
+        #        to_be_shown = received_entries[15*(page - 1):15*page] # TODO colocar numeração das páginas no template
+        #    else:
+        #        to_be_shown = received_entries[15*(page-1):len(received_entries)]
     
-        if ReadEntry.objects.filter(reader_user=reader_user, entry__feed=feed).exists():
-            classifier = train_positivenb(reader_user, feed=feed)
-            classifier.show_most_informative_features()
+        if ReceivedEntry.objects.filter(
+                reader_user=reader_user,
+                entry__feed=feed,
+                showed_to_user=True).exists():
+            read_entries = ReadEntry.objects.filter(reader_user=reader_user, entry__feed=feed)
+            classifier = train_nb(reader_user, feed=feed)
+            classifier.show_most_informative_features(20)
             # classify stuff
-            for receipt in received_entries:
+            for receipt in [r
+                            for r in to_be_shown2]:
+                            #if r.entry not in [e.entry for e in read_entries]]:
                 label = classify(receipt.entry, classifier)
-                if receipt.showed_to_user == False:
-                    receipt.showed_to_user = True
-                    receipt.save()
-                if label == True:
+                receipt.showed_to_user = True
+                receipt.save()
+                if label == 'interesting':
                     recommended = RecommendedEntry.objects.get_or_create(entry=receipt.entry, reader_user=reader_user)[0]
                     print recommended.entry
-                    # implementar gatilhos de classificação
-    else:
-        entries = None
+                    recommended_entries.append(recommended.entry)
 
     context_dict = {
         'user': reader_user,
         'feed': feed,
         'feed_list': feed_list,
-        'entries': entries,
+        'entries': to_be_shown2,
+#        'page_number': 1 if page == None else page,
+#        'number_of_pages': len(received_entries)/15 + (0 if len(received_entries)%15 == 0 else 1),
         'feed_sub_form': feed_sub_form,
-        }
+        'recommended_entries': recommended_entries,
+    }
 
     return render_to_response('reader/feed_page.html', context_dict, context)

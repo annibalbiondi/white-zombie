@@ -2,7 +2,7 @@
 import re
 import datetime
 import feedparser
-from reader.models import Feed, Entry
+from reader.models import Feed, Entry, ReaderUser, ReceivedEntry
 
 def fetch_feed(url):
     d = feedparser.parse(url)
@@ -94,12 +94,12 @@ def fetch_entries(d, feed):
 
 # call every 30 min or less
 def update_feeds():
-    for f in feeds.objects.all():
+    for f in Feed.objects.all():
         collected_entries = fetch_feed(f.address)[1]
-        subscribed_users = ReaderUser.objects.filter(feeds__id=f.address)
+        subscribed_users = ReaderUser.objects.filter(feeds__in=[f.address])
         for ru in subscribed_users:
             for e in collected_entries:
-                ru.entries_received.get_or_create(entry=e)[0]
+                receipt = ReceivedEntry.objects.get_or_create(entry=e, reader_user=ru)[0]
 
 
 def pt_br_date_handler(date_string):

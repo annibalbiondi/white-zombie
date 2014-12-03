@@ -4,14 +4,15 @@ import locale
 import os
 import random
 import re
-from nltk.classify import NaiveBayesClassifier, PositiveNaiveBayesClassifier
+from nltk.classify import NaiveBayesClassifier, PositiveNaiveBayesClassifier, accuracy
+from nltk.probability import FreqDist
 from nltk.tokenize import word_tokenize, RegexpTokenizer
 from reader.models import ReaderUser, Entry, ReadEntry, ReceivedEntry, Feed
 
 locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
-all_title_words = set()
-all_description_words = set()
+title_features = None
+description_features = None
 tokenizer = RegexpTokenizer(r'\w+-\w+|[a-zA-Z]\w+|\d+[a-zA-Z]+',
                             flags=re.UNICODE|re.MULTILINE)
 
@@ -46,33 +47,36 @@ def slugify(text):
                              re.UNICODE))
 
 def get_word_features(user):
+    global title_features, description_features
+
     received_entries = ReceivedEntry.objects.filter(reader_user=user)
-    
+    all_title_words = []
+    all_description_words = []
     for r in received_entries:
-        all_title_words.update(remove_stopwords(
-                tokenizer.tokenize(r.entry.title)))
+        all_title_words.extend(
+            remove_stopwords(tokenizer.tokenize(r.entry.title)))
         
         slug_description = slugify(r.entry.description)
-        all_description_words.update(
+        all_description_words.extend(
             remove_stopwords(tokenizer.tokenize(slug_description)))
 
-    print all_title_words
-    print all_description_words
+    title_features = FreqDist(w for w in all_title_words).keys()[:2000]
+    description_features = FreqDist(w for w in all_description_words).keys()[:2000]
 
 
 def extract_features(entry):
-    features = dict()
+    features = {}
     title_words = remove_stopwords(tokenizer.tokenize(entry.title))
     
     slug_description = slugify(entry.description)
     description_words = remove_stopwords(tokenizer.tokenize(slug_description))
     feed = entry.feed
 
-    for word in all_title_words:
+    for word in title_features:
         features['title_contains(%s)' % word] = (word in title_words)
-    for word in all_description_words:
+    for word in description_features:
         features['description_contains(%s)' % word] = (word in description_words)
-    features['from_feed'] = feed
+
     return features
 
 
@@ -80,32 +84,30 @@ def train_nb(user, feed=None):
     get_word_features(user)
 
     if (feed == None):
-        shown_receipts = ReceivedEntries.objects.filter(
+        shown_receipts = ReceivedEntry.objects.filter(
             reader_user=user,
-            showed_to_user=True).order_by('-entry__pub_date')[:200]
-        user_entries_read = [
-            r.entry
-            for r in ReadEntries.objects.filter(reader_user=user)]
+            showed_to_user=True)
     else:
         shown_receipts = ReceivedEntry.objects.filter(
             reader_user=user,
             entry__feed=feed,
-            showed_to_user=True).order_by('-entry__pub_date')[:200]
-        user_entries_read = [
-            r.entry
-            for r in ReadEntry.objects.filter(entry__feed=feed,
-                                              reader_user=user)]
+            showed_to_user=True)
+    read_entries = ReadEntry.objects.filter(entry__in=[
+        r.entry
+        for r in shown_receipts])
+    read_entries = [r.entry for r in read_entries]
+    unread_entries = [r.entry
+                      for r in shown_receipts
+                      if r.entry not in read_entries]
 
-    sample_size = 15 if len(shown_receipts) >= 100 else len(user_entries_read)
-    read_sample = random.sample(user_entries_read, sample_size)
-    unread_entries = [r.entry for r in shown_receipts if r.entry not in user_entries_read]
-    unread_sample = random.sample(unread_entries, sample_size)
     user_featureset = []
     
-    for e in read_sample:
-        user_featureset.append((extract_features(e), 'interesting'))
-    for e in unread_sample:
-        user_featureset.append((extract_features(e), 'not_interesting'))
+    for e in read_entries:
+        user_featureset.append(
+            (extract_features(e), 'interesting'))
+    for e in unread_entries:
+        user_featureset.append(
+            (extract_features(e), 'not_interesting'))
 
     return NaiveBayesClassifier.train(user_featureset)
 
@@ -114,34 +116,31 @@ def train_positivenb(user, feed=None):
     get_word_features(user)
 
     if (feed == None):
-        shown_receipts = ReceivedEntries.objects.filter(
+        shown_receipts = ReceivedEntry.objects.filter(
             reader_user=user,
-            showed_to_user=True).order_by('-entry__pub_date')[:200]
-        user_entries_read = [
-            r.entry
-            for r in ReadEntries.objects.filter(reader_user=user)]
+            showed_to_user=True).order_by('-entry__pub_date')[:500]
     else:
         shown_receipts = ReceivedEntry.objects.filter(
             reader_user=user,
             entry__feed=feed,
             showed_to_user=True).order_by('-entry__pub_date')[:200]
-        user_entries_read = [
-            r.entry
-            for r in ReadEntry.objects.filter(entry__feed=feed,
-                                              reader_user=user)]
+    read_entries = ReadEntry.objects.filter(entry__in=[
+        r.entry
+        for r in shown_receipts])
+    read_entries = [r.entry for r in read_entries]
 
-    sample_size = 15 if len(shown_receipts) >= 100 else len(user_entries_read)
-    read_sample = random.sample(user_entries_read, sample_size)
-    unread_entries = [r.entry for r in shown_receipts if r.entry not in user_entries_read]
+    unread_entries = [r.entry for r in shown_receipts if r.entry not in read_entries]
     if not unread_entries:
         unread_entries = ReceivedEntry.objects.filter(
-            reader_user=user).exclude(id__in=[r.id for r in user_entries_read]).order_by('-entry__pub_date')[:200]
+            reader_user=user).exclude(id__in=[r.id for r in read_entries]).order_by('-entry__pub_date')[:200]
         unread_entries = [r.entry for r in unread_entries]
-    unread_sample = random.sample(unread_entries, sample_size*2)
+    print len(read_entries), len(unread_entries), len(shown_receipts)
+    read_sample = random.sample(read_entries, len(read_entries))
+    unread_sample = random.sample(unread_entries, len(unread_entries)/2)
     read_featureset = [extract_features(e) for e in read_sample]
     unread_featureset = [extract_features(e) for e in unread_sample]
 
-    return PositiveNaiveBayesClassifier.train(read_featureset, unread_featureset)
+    return PositiveNaiveBayesClassifier.train(read_featureset, unread_featureset, float(len(read_entries))/len(shown_receipts))
 
 
 def classify(entry, classifier):
