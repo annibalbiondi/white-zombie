@@ -208,7 +208,7 @@ def feed_page(request):
                 showed_to_user=True).exists():
             read_entries = ReadEntry.objects.filter(reader_user=reader_user, entry__feed=feed)
             classifier = train_nb(reader_user, feed=feed)
-            classifier.show_most_informative_features(20)
+            #classifier.show_most_informative_features(20)
             # classify stuff
             for receipt in [
                     r
