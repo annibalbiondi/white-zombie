@@ -72,9 +72,9 @@ def extract_features(entry):
     description_words = remove_stopwords(tokenizer.tokenize(slug_description))
     feed = entry.feed
 
-    for word in title_features:
+    for word in title_words:
         features['title_contains(%s)' % word] = (word in title_words)
-    for word in description_features:
+    for word in description_words:
         features['description_contains(%s)' % word] = (word in description_words)
 
     return features
@@ -83,15 +83,17 @@ def extract_features(entry):
 def train_nb(user, feed=None):
     get_word_features(user)
 
-    if (feed == None):
-        shown_receipts = ReceivedEntry.objects.filter(
-            reader_user=user,
-            showed_to_user=True)
+    #if (feed == None):
+    shown_receipts = ReceivedEntry.objects.filter(
+        reader_user=user,
+        showed_to_user=True)
+    '''
     else:
         shown_receipts = ReceivedEntry.objects.filter(
-            reader_user=user,
+        reader_user=user,
             entry__feed=feed,
             showed_to_user=True)
+    '''
     read_entries = ReadEntry.objects.filter(entry__in=[
         r.entry
         for r in shown_receipts])

@@ -9,6 +9,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.utils.http import urlquote
 from reader.classification import train_nb, train_positivenb, classify
 from reader.forms import RegisterForm, LoginForm, FeedSubscriptionForm
 from reader.models import Feed, Entry, ReaderUser, ReadEntry, ReceivedEntry, RecommendedEntry
@@ -155,7 +156,7 @@ def feed_page(request):
     feed_list = reader_user.feeds.all()
     feed = None
     recommended_entries = []
-    to_be_shown2 = None
+    to_be_shown = None
     page = None
 
     if request.method == 'POST':
@@ -170,6 +171,7 @@ def feed_page(request):
                     received_entry.save()
                 reader_user.save()
                 # redirecionar para a página do feed recém-assinado
+                redirect('/reader/feed?address=' + urlquote(feed.address))
                 
         elif 'subscription-cancelation' in request.POST:
             feed_address = request.POST['address']
@@ -195,35 +197,23 @@ def feed_page(request):
         paginator = Paginator(received_entries, 15)
 
         try:
-            to_be_shown2 = paginator.page(page)
+            to_be_shown = paginator.page(page)
         except PageNotAnInteger:
-            to_be_shown2 = paginator.page(1)
+            to_be_shown = paginator.page(1)
         except EmptyPage:
-            to_be_shown2 = paginator.page(paginator.num_pages)
-
-        #if page == None:
-        #    if len(received_entries) >= 15:
-        #        to_be_shown = received_entries[0:15]
-        #    else:
-        #        to_be_shown = received_entries[0:len(received_entries)]
-        #else:
-        #    page = int(page)
-        #    if len(received_entries) >= 15*page:
-        #        to_be_shown = received_entries[15*(page - 1):15*page] # TODO colocar numeração das páginas no template
-        #    else:
-        #        to_be_shown = received_entries[15*(page-1):len(received_entries)]
+            to_be_shown = paginator.page(paginator.num_pages)
     
         if ReceivedEntry.objects.filter(
                 reader_user=reader_user,
-                entry__feed=feed,
                 showed_to_user=True).exists():
             read_entries = ReadEntry.objects.filter(reader_user=reader_user, entry__feed=feed)
             classifier = train_nb(reader_user, feed=feed)
             classifier.show_most_informative_features(20)
             # classify stuff
-            for receipt in [r
-                            for r in to_be_shown2]:
-                            #if r.entry not in [e.entry for e in read_entries]]:
+            for receipt in [
+                    r
+                    for r in to_be_shown
+                    if r.entry not in [e.entry for e in read_entries]]:
                 label = classify(receipt.entry, classifier)
                 receipt.showed_to_user = True
                 receipt.save()
@@ -236,9 +226,7 @@ def feed_page(request):
         'user': reader_user,
         'feed': feed,
         'feed_list': feed_list,
-        'entries': to_be_shown2,
-#        'page_number': 1 if page == None else page,
-#        'number_of_pages': len(received_entries)/15 + (0 if len(received_entries)%15 == 0 else 1),
+        'entries': to_be_shown,
         'feed_sub_form': feed_sub_form,
         'recommended_entries': recommended_entries,
     }
