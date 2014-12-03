@@ -2,7 +2,7 @@
 import re
 import datetime
 import feedparser
-from reader.models import Feed, Entry
+from reader.models import Feed, Entry, ReaderUser, ReceivedEntry
 
 def fetch_feed(url):
     d = feedparser.parse(url)
@@ -52,10 +52,12 @@ def fetch_feed(url):
     feed.ttl = ttl
     feed.save()
     entries = fetch_entries(d, feed)
-    return feed
+    return (feed, entries)
+
 
 def fetch_entries(d, feed):
-    
+    entries = []
+
     for e in d.entries:
         title = e.get('title', 'No title')
         link = e.get('link', 'http://nolink')
@@ -65,13 +67,14 @@ def fetch_entries(d, feed):
         comments = e.get('comments')
         parsed_pub_date = e.get('published_parsed')
         if (parsed_pub_date != None):
-            pub_date = datetime.datetime.datetime(
-                parsed_pub_date['tm_year'],
-                parsed_pub_date['tm_mon'],
-                parsed_pub_date['tm_day'],
-                parsed_pub_date['tm_hour'],
-                parsed_pub_date['tm_min'],
-                parsed_pub_date['tm_sec'])
+            print parsed_pub_date
+            pub_date = datetime.datetime(
+                parsed_pub_date.tm_year,
+                parsed_pub_date.tm_mon,
+                parsed_pub_date.tm_mday,
+                parsed_pub_date.tm_hour,
+                parsed_pub_date.tm_min,
+                parsed_pub_date.tm_sec)
         else:
             pub_date = e.get('published')
             if pub_date != None:
@@ -86,7 +89,19 @@ def fetch_entries(d, feed):
             comments=comments,
             pub_date=pub_date,
             feed=feed)[0]
-        
+
+        entries.append(entry)
+    return entries
+
+
+# call every 30 min or less
+def update_feeds():
+    for f in Feed.objects.all():
+        collected_entries = fetch_feed(f.address)[1]
+        subscribed_users = ReaderUser.objects.filter(feeds__in=[f.address])
+        for ru in subscribed_users:
+            for e in collected_entries:
+                receipt = ReceivedEntry.objects.get_or_create(entry=e, reader_user=ru)[0]
 
 
 def pt_br_date_handler(date_string):

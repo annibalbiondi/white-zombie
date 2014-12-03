@@ -43,28 +43,37 @@ class Entry(models.Model):
         return self.title
 
 
+class ReaderUser(models.Model):
+    user = models.OneToOneField(User, primary_key=True, related_name='reader_user')
+    feeds = models.ManyToManyField(Feed)
+
+    def __unicode__(self):
+        return self.user.username
+
+
 class ReceivedEntry(models.Model):
     entry = models.ForeignKey(Entry)
     showed_to_user = models.BooleanField(default=False)
+    reader_user = models.ForeignKey(ReaderUser)
+
+    def __unicode__(self):
+        return self.entry.__unicode__() + ' ' + self.reader_user.__unicode__()
 
 
 class RecommendedEntry(models.Model):
     entry = models.ForeignKey(Entry)
-    date = models.DateTimeField(auto_now_add=True);
+    date = models.DateTimeField(auto_now_add=True)
     user_sessions_since = models.IntegerField(default=0)
+    reader_user = models.ForeignKey(ReaderUser)
+
+    def __unicode__(self):
+        return self.entry.__unicode__() + ' ' + self.reader_user.__unicode__()
 
 
 class ReadEntry(models.Model):
     entry = models.ForeignKey(Entry)
-    date = models.DateTimeField(auto_now_add=True);
-
-
-class ReaderUser(models.Model):
-    user = models.OneToOneField(User, primary_key=True, related_name='reader_user')
-    feeds = models.ManyToManyField(Feed)
-    entries_received = models.ManyToManyField(ReceivedEntry, related_name='reader_user')
-    entries_read = models.ManyToManyField(ReadEntry, related_name='reader_user')
-    entries_recommended = models.ManyToManyField(RecommendedEntry, related_name='reader_user')
+    date = models.DateTimeField(auto_now_add=True)
+    reader_user = models.ForeignKey(ReaderUser)
 
     def __unicode__(self):
-        return self.user.username
+        return self.entry.__unicode__() + ' ' + self.reader_user.__unicode__()
