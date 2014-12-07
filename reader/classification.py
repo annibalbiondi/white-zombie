@@ -4,7 +4,8 @@ import locale
 import os
 import random
 import re
-from nltk.classify import NaiveBayesClassifier, PositiveNaiveBayesClassifier, accuracy
+from nltk.classify import PositiveNaiveBayesClassifier, accuracy #NaiveBayesClassifier
+from reader.naive_bayes import NaiveBayesClassifier
 from nltk.probability import FreqDist
 from nltk.tokenize import word_tokenize, RegexpTokenizer
 from reader.models import ReaderUser, Entry, ReadEntry, ReceivedEntry, Feed
@@ -65,17 +66,15 @@ def get_word_features(user):
 
 
 def extract_features(entry):
-    features = {}
+    features = []
     title_words = remove_stopwords(tokenizer.tokenize(entry.title))
     
     slug_description = slugify(entry.description)
     description_words = remove_stopwords(tokenizer.tokenize(slug_description))
     feed = entry.feed
 
-    for word in title_words:
-        features['title_contains(%s)' % word] = (word in title_words)
-    for word in description_words:
-        features['description_contains(%s)' % word] = (word in description_words)
+    features.extend(title_words)
+    features.extend(description_words)
 
     return features
 
