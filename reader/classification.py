@@ -79,7 +79,7 @@ def extract_features(entry):
     return features
 
 
-def train_nb(user, feed=None):
+def train_nb(user, to_be_shown, feed=None):
     get_word_features(user)
 
     #if (feed == None):
@@ -99,7 +99,8 @@ def train_nb(user, feed=None):
     read_entries = [r.entry for r in read_entries]
     unread_entries = [r.entry
                       for r in shown_receipts
-                      if r.entry not in read_entries]
+                      if r.entry not in read_entries
+                      and r not in to_be_shown]
 
     user_featureset = []
     
