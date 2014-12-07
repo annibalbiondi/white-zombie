@@ -207,22 +207,17 @@ def feed_page(request):
                 reader_user=reader_user,
                 showed_to_user=True).exists():
             read_entries = ReadEntry.objects.filter(reader_user=reader_user, entry__feed=feed)
-            classifier = train_nb(reader_user, feed=feed)
-            #print classifier.feature_condprob()
-            #print classifier.prior_prob()
-            # classifier.show_most_informative_features(20)
+            classifier = train_nb(reader_user, to_be_shown, feed=feed)
             # classify stuff
             for receipt in [
                     r
                     for r in to_be_shown
                     if r.entry not in [e.entry for e in read_entries]]:
                 label = classify(receipt.entry, classifier)
-                print label
                 receipt.showed_to_user = True
                 receipt.save()
                 if label == 'interesting':
                     recommended = RecommendedEntry.objects.get_or_create(entry=receipt.entry, reader_user=reader_user)[0]
-                    print recommended.entry
                     recommended_entries.append(recommended.entry)
 
     context_dict = {

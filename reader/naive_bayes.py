@@ -29,7 +29,6 @@ class NaiveBayesClassifier:
             for feature in featureset:
                 if self._feature_condprob.get(feature):
                     score[label] += math.log(self._feature_condprob[feature][label])
-            print label, score[label]
 
         return max(score.iteritems(), key=lambda s: s[1])[0]
 
@@ -40,7 +39,7 @@ class NaiveBayesClassifier:
         prior_prob = {}
         feature_condprob = {}
         feature_frequency = {}
-        smoothing = 0.1
+        smoothing = 1
 
         for featureset, label in labeled_featuresets:
             if label not in labels:

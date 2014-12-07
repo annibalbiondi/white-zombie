@@ -67,7 +67,6 @@ def fetch_entries(d, feed):
         comments = e.get('comments')
         parsed_pub_date = e.get('published_parsed')
         if (parsed_pub_date != None):
-            print parsed_pub_date
             pub_date = datetime.datetime(
                 parsed_pub_date.tm_year,
                 parsed_pub_date.tm_mon,
