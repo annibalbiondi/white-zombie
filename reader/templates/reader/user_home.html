@@ -1,0 +1,44 @@
+{% extends 'reader/base_logged_in.html' %}
+
+{% block content %}
+  <div class="recommended col-md-5">
+    <h2>Notícias recomendadas</h2>
+    <div class="entry-list"> <!-- TODO exibir feed ao qual cada notícia értence -->
+      {% for e in recommended_entries %}
+      <div class="entry">
+        <div>
+	  <a target="_blank" href="{% url 'click' %}?url={{ e.entry.link|urlencode }}">
+            <h3>{{ e.entry.title }}</h3>
+	  </a>
+          <p>{{ e.entry.pub_date }}</p>
+        </div>
+        <p>{{ e.entry.description|safe }}</p>
+        <p>de 
+          <a href="{% url 'feed_page' %}?address={{ e.entry.feed.address|urlencode }}">
+            {{ e.entry.feed.title }}
+          </a>
+        </p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="most-recent col-md-4">
+    <h2>Últimas notícias</h2>
+    {% for e in recent_entries %}
+    <div class="entry"> <!-- TODO exibir feed ao qual cada notícia értence -->
+      <div>
+	<a target="_blank" href="{% url 'click' %}?url={{ e.entry.link|urlencode }}">
+          <h3>{{ e.entry.title }}</h3>
+	</a>
+      </div>
+      <p>{{ e.entry.description|safe }}</p>
+      <p>de 
+        <a href="{% url 'feed_page' %}?address={{ e.entry.feed.address|urlencode }}">
+          {{ e.entry.feed.title }}
+        </a>
+      </p>
+    </div>
+    {% endfor %}
+  </div>
+{% endblock %}
