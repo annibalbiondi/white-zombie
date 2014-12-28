@@ -36,7 +36,7 @@ def remove_stopwords(words):
 
 
 def remove_html_tags(text):
-    result = ' '.join(re.split(r'<.*>', text, 0,
+    result = ' '.join(re.split(r'<.*?>', text, 0,
                                re.UNICODE | re.DOTALL))
     return result
 
