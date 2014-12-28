@@ -1,3 +1,4 @@
+/* melhorar posicionamento do link para registro */
 #register-link, #login-link {
     float: right;
 }
@@ -12,8 +13,4 @@
 
 .login-form .checkbox-link {
     display: block;
-}
-
-.login-form .checkbox {
-    display: inline;
 }
