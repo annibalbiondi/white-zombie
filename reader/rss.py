@@ -26,6 +26,8 @@ def fetch_feed(url):
         pub_date = d.feed.get('published')
         if pub_date != None:
             pub_date = pt_br_date_handler(pub_date)
+        else:
+            pub_date = datetime.datetime.now()
     # nada para lastBuildDate
     category = d.feed.get('tags', [{}])[0].get('label', None)
     generator = d.feed.get('generator')
@@ -67,7 +69,6 @@ def fetch_entries(d, feed):
         comments = e.get('comments')
         parsed_pub_date = e.get('published_parsed')
         if (parsed_pub_date != None):
-            print parsed_pub_date
             pub_date = datetime.datetime(
                 parsed_pub_date.tm_year,
                 parsed_pub_date.tm_mon,
@@ -111,6 +112,6 @@ def pt_br_date_handler(date_string):
     day_of_week_list = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab']
     month_list = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
                   'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
-    month = month_list.index(month)
+    month = month_list.index(month) + 1
     # FIXME lidar com offset
     return datetime.datetime(int(year), int(month), int(day_of_month), int(hour), int(minute), int(second))

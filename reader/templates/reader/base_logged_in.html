@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{% block title %}PoliClipping{% endblock %}</title>
+    {% load staticfiles %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/reset.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap.min.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'reader/css/logged_in.css' %}"/>
+    <script src="{% static 'js/jquery-2.1.1.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    {% block static_files %}{% endblock %}
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="feed-subscribe col-md-4">
+          <form method="post" action="/reader/feed">
+	    {% csrf_token %}
+	    <label for="feed-link">Assinar feed</label>
+	    {{ feed_sub_form }}
+	    <button type="submit" name="subscription-submit">Assinar</button>
+          </form>
+        </div>
+        
+        <div class="user-area col-md-3 col-md-offset-5">
+          <a href="/reader"><span class="username">{{ user.user.username }}</span></a>
+          <form method="post" action="/reader/">
+	    {% csrf_token %}
+	    <button class="btn btn-link" type="submit" name="logout">sair</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="feeds-section col-md-3">
+          <p>Seus feeds</p>
+	  <form method="post" action="/reader/feed">
+	    {% csrf_token %}
+	    <button type="submit" name="update-feeds">Atualizar</button>
+	  </form>
+          <div class="feed-list">
+	    {% for f in feed_list %}
+	    <div class="item">
+              <!-- TODO limitar tamanho do nome do feed -->
+	      <a href="{% url 'feed_page' %}?address={{ f.address|urlencode }}">
+	        {{ f.title }}
+	      </a>
+	      <form method="post" action="/reader/feed">
+	        {% csrf_token %}
+	        <input type="hidden" name="address" value="{{ f.address }}"/>
+	        <button type="submit" name="subscription-cancelation">Cancelar</button>
+	      </form>
+	    </div>
+	    {% endfor %}
+          </div>
+        </div>
+
+        {% block content %}
+        {% endblock %}
+      </div>
+    </div>
+  </body>
+</html>

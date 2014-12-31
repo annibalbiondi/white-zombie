@@ -8,6 +8,7 @@ $(document).ready(function() {
 	$('.login-screen').show();
 	$('.register-screen').hide();
     });
+    // TODO melhorar a conferência de senhas
     $('.register-screen input[type=password]').change(function() {
 	if ($('#register-password').val() === $('#repeat-password').val()) {
 	    $('#register-submit').removeClass('disabled');

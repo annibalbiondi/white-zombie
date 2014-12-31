@@ -1,79 +1,40 @@
-<!DOCTYPE html>
-<html>
+{% extends 'reader/base_logged_in.html' %}
 
-  <head>
-    <title>RSSReader - {{ feed.title }}</title>
-    {% load staticfiles %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/reset.css' %}"/>
-    <link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap.min.css' %}"/>
-    <link rel="stylesheet" type="text/css" href="{% static 'reader/css/feed_page.css' %}"/>
-    <script src="{% static 'js/jquery-2.1.1.js' %}"></script>
-    <script src="{% static 'js/bootstrap.min.js' %}"></script>
-  </head>
+{% block title %}PoliClipping - {{ feed.title }}{% endblock %}
 
-  <body>
-    <div class="feeds-section">
-      <div class="feed-subscribe">
-	<form method="post" action="/reader/feed">
-	  {% csrf_token %}
-	  <label for="feed-link">Assinar feed</label>
-	  {{ feed_sub_form }}
-	  <button type="submit" name="subscription-submit">Assinar</button>
-	</form>
-      </div>
-
-      <div class="feed-list"> <!-- TODO tem que por o scroll -->
-	<p>Seus feeds</p>
-	<form method="post" action="/reader/feed">
-	  {% csrf_token %}
-	  <button type="submit" name="update-feeds">Atualizar</button>
-	</form>
-	{% for f in feed_list %}
-	<div class="item">
-	  <a href="{% url 'feed_page' %}?address={{ f.address|urlencode }}">
-	    {{ f.title }}
-	  </a>
-	  <form method="post" action="/reader/feed">
-	    {% csrf_token %}
-	    <input type="hidden" name="address" value="{{ f.address }}"/>
-	    <button type="submit" name="subscription-cancelation">Cancelar</button>
-	  </form>
-	</div>
-	{% endfor %}
-      </div>
-    </div>
-
+{% block content %}
+  <div class="col-md-9">
     <div class="feed-display">
       {% if feed != None %}
       <div class="feed-header">
-	<a href="{{ feed.link }}">{{ feed.title }}</a>
-	<div>
-	  <span>Ordenar por:</span>
-	  <button type="button" class="btn btn-link">Data</button>
-	  <button type="button" class="btn btn-link">Recomendação</button>
-	</div>
-	<p>{{ feed.description }}</p>
+        <a href="{{ feed.link }}">
+          <h1>{{ feed.title }}</h1>
+        </a>
+        <p>{{ feed.description }}</p>
       </div>
 
       <div class="entry-list">
-	{% for e in entries %}
-	<div class="entry">
-	  <div>
+        {% for e in entries %}
+        <div class="entry">
+          <div>
 	    <a target="_blank" href="{% url 'click' %}?url={{ e.entry.link|urlencode }}">
-	      {% if e.entry in recommended_entries %}
-	      ***{{ e.entry.title }}***
-	      {% else %}
-	      {{ e.entry.title }}
-	      {% endif %}
-	    </a> {{ e.entry.pub_date }}
-	  </div>
-	  <div>
+              <h2>
+	        {% if e.entry in recommended_entries %}
+	        ***{{ e.entry.title }}***
+	        {% else %}
+	        {{ e.entry.title }}
+	        {% endif %}
+              </h2>
+	    </a>
+            <p>{{ e.entry.pub_date }}</p>
+          </div>
+          <div>
 	    {{ e.entry.description|safe }}
-	  </div>
-	</div>
-	{% endfor %}
-	<div class="pagination">
-	  <span class="step-links">
+          </div>
+        </div>
+        {% endfor %}
+        <div class="pagination">
+          <span class="step-links">
             {% if entries.has_previous %}
             <a href="?address={{ feed.address }}&page={{ entries.previous_page_number }}">anterior</a>
             {% endif %}
@@ -85,30 +46,22 @@
             {% if entries.has_next %}
             <a href="?address={{ feed.address }}&page={{ entries.next_page_number }}">próximo</a>
             {% endif %}
-	  </span>
-	</div>
+          </span>
+        </div>
       </div>
       {% else %}
       <div class="feed-header">
-	<p>Nenhum feed foi selecionado!</p>
-	<div>
-	  <span>Ordenar por:</span>
-	  <button type="button" class="btn btn-link">Data</button>
-	  <button type="button" class="btn btn-link">Recomendação</button>
-	</div>
-	<p>Nada para ver aqui...</p>
+        <p>Nenhum feed foi selecionado!</p>
+        <div>
+          <span>Ordenar por:</span>
+          <button type="button" class="btn btn-link">Data</button>
+          <button type="button" class="btn btn-link">Recomendação</button>
+        </div>
+        <p>Nada para ver aqui...</p>
       </div>
       <div class="entry-list">
       </div>
       {% endif %}
     </div>
-
-    <div class="user-area">
-      <p>{{ user.user.username }}</p>
-      <form method="post" action="/reader/">
-	{% csrf_token %}
-	<button type="submit" name="logout">sair</button>
-      </form>
-    </div>
-  </body>
-</html>
+  </div>
+{% endblock content %}
