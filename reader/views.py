@@ -250,6 +250,7 @@ def feed_page(request):
                     for r in to_be_shown
                     if r.entry not in [e.entry for e in read_entries]]:
                 label = classify(receipt.entry, classifier)
+                print receipt, label
                 receipt.showed_to_user = True
                 receipt.save()
                 if label == 'interesting':
