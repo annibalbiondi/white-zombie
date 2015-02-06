@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils.http import urlquote
-from reader.classification import train_nb, train_positivenb, classify
+from reader.classification import train_nb, classify
 from reader.forms import RegisterForm, LoginForm, FeedSubscriptionForm
 from reader.models import Feed, Entry, ReaderUser, ReadEntry, ReceivedEntry, RecommendedEntry
 from reader import rss

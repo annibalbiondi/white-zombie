@@ -41,8 +41,8 @@ def remove_html_tags(text):
 def slugify(text):
     new_text = remove_html_tags(text)
 
-    return ' '.join(re.split(r'\s\d+|\W\s', new_text, 0,
-                             re.UNICODE))
+    return ' '.join(re.split(r'\s\d+|\W\s', new_text,
+                             0, re.UNICODE))
 
 def get_word_features(user):
     received_entries = ReceivedEntry.objects.filter(reader_user=user)
@@ -100,7 +100,7 @@ def train_nb(user, to_be_shown, feed=None):
 
     return NaiveBayesClassifier.train(user_featureset)
 
-
+"""
 def train_positivenb(user, to_be_shown, feed=None):
     get_word_features(user)
 
@@ -138,6 +138,7 @@ def train_positivenb(user, to_be_shown, feed=None):
         user_featureset, unlabeled_featureset,
         float(len(labeled_featureset))/
         (len(labeled_featureset) + len(unlabeled_featureset)))
+"""
 
 '''
 def train_svm(user, to_be_shown, feed=None):
