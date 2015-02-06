@@ -108,7 +108,8 @@ def update_feeds():
 def pt_br_date_handler(date_string):
     pattern = re.compile(
         r'(Seg|Ter|Qua|Qui|Sex|Sáb|Dom),\s(\d{1,2})\s(Jan|Fev|Mar|Abr|Mai|Jun|Jul|Ago|Set|Out|Nov|Dez)\s(\d{4})\s(\d{2}):(\d{2}):(\d{2})\s(\+|-)(\d{4})')
-    day_of_week, day_of_month, month, year, hour, minute, second, offset_dir, offset_value = pattern.search(date_string).groups()
+    matches = pattern.search(date_string)
+    day_of_week, day_of_month, month, year, hour, minute, second, offset_dir, offset_value = matches.groups()
     day_of_week_list = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab']
     month_list = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
                   'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
