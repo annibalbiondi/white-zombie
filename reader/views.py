@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils.http import urlquote
-from reader.classification import train_nb, train_positivenb, classify
+from reader.classification import train_nb, classify
 from reader.forms import RegisterForm, LoginForm, FeedSubscriptionForm
 from reader.models import Feed, Entry, ReaderUser, ReadEntry, ReceivedEntry, RecommendedEntry
 from reader import rss
@@ -48,7 +48,8 @@ def dev(request):
 
             user.save()
 
-    entries_received = [r.entry for r in user.entries_received.all().order_by('-entry__pub_date')]
+    entries_received = [r.entry for r in user.entries_received.all()
+                        .order_by('-entry__pub_date')]
     entries_recommended = [r.entry for r in user.entries_recommended.all()]
 
     context_dict = {
@@ -69,7 +70,7 @@ def click(request):
     user = User.objects.get(username=request.session['user'])
     reader_user = user.reader_user
     link = request.GET['url']
-    clicked_entry = Entry.objects.get(link=link)
+    clicked_entry = Entry.objects.get(link=link) # FIXME problema com objetos múltiplos
     readEntry = ReadEntry.objects.get_or_create(
         entry=clicked_entry, reader_user=reader_user)[0]
     receivedEntry = ReceivedEntry.objects.get(
@@ -123,8 +124,14 @@ def index(request):
                 reader_user.feeds.remove(feed_to_unsubscribe)
                 reader_user.save()
 
-        recommended_entries = random.sample(RecommendedEntry.objects.filter(reader_user=reader_user), 3)
-        recent_entries = ReceivedEntry.objects.filter(reader_user=reader_user).order_by('-entry__pub_date')[:3]
+        recommended_entries = []
+        recent_entries = []
+        if RecommendedEntry.objects.all().count() >= 3:
+            recommended_entries = random.sample(
+                RecommendedEntry.objects.filter(reader_user=reader_user), 3)
+        if ReceivedEntry.objects.all().count() >= 3:
+            recent_entries = ReceivedEntry.objects.filter(
+                reader_user=reader_user).order_by('-entry__pub_date')[:3]
 
         for r in recent_entries:
             r.showed_to_user = True

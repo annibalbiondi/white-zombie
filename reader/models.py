@@ -44,7 +44,8 @@ class Entry(models.Model):
 
 
 class ReaderUser(models.Model):
-    user = models.OneToOneField(User, primary_key=True, related_name='reader_user')
+    user = models.OneToOneField(User, primary_key=True,
+                                related_name='reader_user')
     feeds = models.ManyToManyField(Feed)
 
     def __unicode__(self):

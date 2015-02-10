@@ -3,23 +3,10 @@ import math
 
 class NaiveBayesClassifier:
 
-    def __init__(self, labels, vocabulary, prior_prob, feature_condprob):
+    def __init__(self, labels, prior_prob, feature_condprob):
         self._labels = labels
-        self._vocabulary = vocabulary
         self._prior_prob = prior_prob
         self._feature_condprob = feature_condprob
-
-    def vocabulary(self):
-        return self._vocabulary
-
-    def labels(self):
-        return self._labels
-
-    def prior_prob(self):
-        return self._prior_prob
-
-    def feature_condprob(self):
-        return self._feature_condprob
 
     def classify(self, featureset):
         score = {}
@@ -28,7 +15,8 @@ class NaiveBayesClassifier:
             score[label] = math.log(self._prior_prob[label])
             for feature in featureset:
                 if self._feature_condprob.get(feature):
-                    score[label] += math.log(self._feature_condprob[feature][label])
+                    score[label] += math.log(
+                        self._feature_condprob[feature][label])
 
         return max(score.iteritems(), key=lambda s: s[1])[0]
 
@@ -36,35 +24,44 @@ class NaiveBayesClassifier:
     def train(labeled_featuresets):
         labels = set()
         vocabulary = set()
-        prior_prob = {}
-        feature_condprob = {}
+        number_of_instances = {}
         feature_frequency = {}
         smoothing = 1
 
         for featureset, label in labeled_featuresets:
             if label not in labels:
                 labels.add(label)
-                prior_prob[label] = 1
+                number_of_instances[label] = 1
             else:
-                prior_prob[label] += 1
+                number_of_instances[label] += 1
 
             for feature in featureset:
                 if feature not in vocabulary:
                     vocabulary.add(feature)
-                    feature_condprob[feature] = {}
-                    feature_frequency[feature] = 0
-                if not feature_condprob[feature].get(label):
-                    feature_condprob[feature][label] = 1
+                    feature_frequency[feature] = {}
+                if not feature_frequency[feature].get(label):
+                    feature_frequency[feature][label] = 1
                 else:
-                    feature_condprob[feature][label] += 1
-                feature_frequency[feature] += 1
+                    feature_frequency[feature][label] += 1
+
+        prior_prob = {}
+        feature_condprob = {}
 
         for label in labels:
-            prior_prob[label] = float(prior_prob[label])/len(labeled_featuresets)
-            for feature in vocabulary:
-                if not feature_condprob[feature].get(label):
-                    feature_condprob[feature][label] = 0
-                feature_condprob[feature][label] += smoothing
-                feature_condprob[feature][label] = float(feature_condprob[feature][label])/(feature_frequency[feature] + smoothing*len(vocabulary))
+            prior_prob[label] = (float(number_of_instances[label])/
+                                 len(labeled_featuresets))
+            feature_instances = 0
 
-        return NaiveBayesClassifier(labels, vocabulary, prior_prob, feature_condprob)
+            for feature in vocabulary:
+                if not feature_frequency[feature].get(label):
+                    feature_frequency[feature][label] = 0
+                feature_instances += feature_frequency[feature][label]
+                if not feature_condprob.get(feature):
+                    feature_condprob[feature] = {}
+
+            for feature in vocabulary:
+                feature_condprob[feature][label] = (
+                    float(feature_frequency[feature][label] + smoothing)/
+                    (feature_instances + smoothing*len(vocabulary)))
+
+        return NaiveBayesClassifier(labels, prior_prob, feature_condprob)
