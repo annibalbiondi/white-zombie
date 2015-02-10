@@ -80,6 +80,8 @@ def fetch_entries(d, feed):
             pub_date = e.get('published')
             if pub_date != None:
                 pub_date = pt_br_date_handler(pub_date)
+            else:
+                pub_date = datetime.datetime.now()
 
         entry = Entry.objects.get_or_create(
             title=title,
