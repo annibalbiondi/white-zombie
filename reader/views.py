@@ -112,7 +112,7 @@ def index(request):
                 if feed_sub_form.is_valid():
                     feed = rss.fetch_feed(feed_sub_form.cleaned_data['link'])[0]
                     reader_user.feeds.add(feed)
-                    for e in Entry.objects.filter(feed=feed).order_by('-pub_date')[:100]:
+                    for e in Entry.objects.filter(feed=feed).order_by('-pub_date'):
                         received_entry = ReceivedEntry.objects.get_or_create(entry=e, reader_user=reader_user)[0]
                         received_entry.save()
                         reader_user.save()
@@ -210,7 +210,7 @@ def feed_page(request):
             if feed_sub_form.is_valid():
                 feed = rss.fetch_feed(feed_sub_form.cleaned_data['link'])[0]
                 reader_user.feeds.add(feed)
-                for e in Entry.objects.filter(feed=feed).order_by('-pub_date')[:100]:
+                for e in Entry.objects.filter(feed=feed).order_by('-pub_date'):
                     received_entry = ReceivedEntry.objects.get_or_create(entry=e, reader_user=reader_user)[0]
                     received_entry.save()
                 reader_user.save()
