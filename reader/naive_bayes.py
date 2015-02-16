@@ -1,4 +1,3 @@
-# coding=utf-8
 import math
 
 class NaiveBayesClassifier:
@@ -48,8 +47,9 @@ class NaiveBayesClassifier:
         feature_condprob = {}
 
         for label in labels:
-            prior_prob[label] = (float(number_of_instances[label])/
-                                 len(labeled_featuresets))
+            prior_prob[label] = (
+                float(number_of_instances[label])/
+                len(labeled_featuresets))
             feature_instances = 0
 
             for feature in vocabulary:
@@ -64,4 +64,6 @@ class NaiveBayesClassifier:
                     float(feature_frequency[feature][label] + smoothing)/
                     (feature_instances + smoothing*len(vocabulary)))
 
-        return NaiveBayesClassifier(labels, prior_prob, feature_condprob)
+        return NaiveBayesClassifier(labels,
+                                    prior_prob,
+                                    feature_condprob)
