@@ -126,10 +126,10 @@ def index(request):
 
         recommended_entries = []
         recent_entries = []
-        if RecommendedEntry.objects.all().count() >= 3:
+        if RecommendedEntry.objects.filter(reader_user=reader_user).count() >= 3:
             recommended_entries = random.sample(
                 RecommendedEntry.objects.filter(reader_user=reader_user), 3)
-        if ReceivedEntry.objects.all().count() >= 3:
+        if ReceivedEntry.objects.filter(reader_user=reader_user).count() >= 3:
             recent_entries = ReceivedEntry.objects.filter(
                 reader_user=reader_user).order_by('-entry__pub_date')[:3]
 
