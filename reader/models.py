@@ -29,7 +29,7 @@ class Feed(models.Model):
 class Entry(models.Model):
     title = models.CharField(max_length=128, null=True)
     link = models.URLField(null=True)
-    description = models.TextField()
+    description = models.TextField(null=True)
     author = models.EmailField(null=True)
     category = models.CharField(max_length=64, null=True)
     comments = models.URLField(null=True)
@@ -52,9 +52,9 @@ class ReaderUser(models.Model):
         return self.user.username
 
 
-class ReceivedEntry(models.Model):
+class ShownEntry(models.Model):
     entry = models.ForeignKey(Entry)
-    showed_to_user = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True)
     reader_user = models.ForeignKey(ReaderUser)
 
     def __unicode__(self):
@@ -64,7 +64,6 @@ class ReceivedEntry(models.Model):
 class RecommendedEntry(models.Model):
     entry = models.ForeignKey(Entry)
     date = models.DateTimeField(auto_now_add=True)
-    user_sessions_since = models.IntegerField(default=0)
     reader_user = models.ForeignKey(ReaderUser)
 
     def __unicode__(self):

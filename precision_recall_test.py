@@ -1,3 +1,4 @@
+import os
 os.environ.setdefault('DJANGO_SETTINGS_MODULE','poc_project.settings')
 import codecs
 import datetime

@@ -23,16 +23,16 @@ class NaiveBayesClassifier:
     def train(labeled_featuresets):
         labels = set()
         vocabulary = set()
-        number_of_instances = {}
+        number_of_doc_instances = {}
         feature_frequency = {}
         smoothing = 1
 
         for featureset, label in labeled_featuresets:
             if label not in labels:
                 labels.add(label)
-                number_of_instances[label] = 1
+                number_of_doc_instances[label] = 1
             else:
-                number_of_instances[label] += 1
+                number_of_doc_instances[label] += 1
 
             for feature in featureset:
                 if feature not in vocabulary:
@@ -48,7 +48,7 @@ class NaiveBayesClassifier:
 
         for label in labels:
             prior_prob[label] = (
-                float(number_of_instances[label])/
+                float(number_of_doc_instances[label])/
                 len(labeled_featuresets))
             feature_instances = 0
 
@@ -58,6 +58,7 @@ class NaiveBayesClassifier:
                 feature_instances += feature_frequency[feature][label]
                 if not feature_condprob.get(feature):
                     feature_condprob[feature] = {}
+                #print feature, feature_frequency[feature]
 
             for feature in vocabulary:
                 feature_condprob[feature][label] = (
