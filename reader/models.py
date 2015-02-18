@@ -29,7 +29,7 @@ class Feed(models.Model):
 class Entry(models.Model):
     title = models.CharField(max_length=128, null=True)
     link = models.URLField(null=True)
-    description = models.TextField()
+    description = models.TextField(null=True)
     author = models.EmailField(null=True)
     category = models.CharField(max_length=64, null=True)
     comments = models.URLField(null=True)
