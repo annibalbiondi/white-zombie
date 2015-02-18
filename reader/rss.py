@@ -102,6 +102,7 @@ def update_feeds():
     for f in Feed.objects.all():
         fetch_feed(f.address)
 
+
 def pt_br_date_handler(date_string):
     pattern = re.compile(
         r'(Seg|Ter|Qua|Qui|Sex|Sáb|Dom),\s(\d{1,2})\s(Jan|Fev|Mar|Abr|Mai|Jun|Jul|Ago|Set|Out|Nov|Dez)\s(\d{4})\s(\d{2}):(\d{2}):(\d{2})\s(\+|-)(\d{4})')
