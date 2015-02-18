@@ -28,14 +28,14 @@
     {% for e in recent_entries %}
     <div class="entry"> <!-- TODO exibir feed ao qual cada notícia értence -->
       <div>
-	<a target="_blank" href="{% url 'click' %}?url={{ e.entry.link|urlencode }}">
-          <h3>{{ e.entry.title }}</h3>
+	<a target="_blank" href="{% url 'click' %}?url={{ e.link|urlencode }}">
+          <h3>{{ e.title }}</h3>
 	</a>
       </div>
-      <p>{{ e.entry.description|safe }}</p>
+      <p>{{ e.description|safe }}</p>
       <p>de 
-        <a href="{% url 'feed_page' %}?address={{ e.entry.feed.address|urlencode }}">
-          {{ e.entry.feed.title }}
+        <a href="{% url 'feed_page' %}?address={{ e.feed.address|urlencode }}">
+          {{ e.feed.title }}
         </a>
       </p>
     </div>

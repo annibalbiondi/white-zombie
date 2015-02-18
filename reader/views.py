@@ -13,7 +13,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils.http import urlquote
 from reader.classification import train_nb, classify
 from reader.forms import RegisterForm, LoginForm, FeedSubscriptionForm
-from reader.models import Feed, Entry, ReaderUser, ReadEntry, ReceivedEntry, RecommendedEntry
+from reader.models import Feed, Entry, ReaderUser, ReadEntry, ShownEntry, RecommendedEntry
 from reader import rss
 
 def dev(request):
@@ -42,9 +42,8 @@ def dev(request):
 
             # ja que, por agora, todas sao mostradas, todas serao marcadas como tal
             for e in new_entries:
-                receipt = ReceivedEntry.objects.get(entry=e)
-                receipt.showed_to_user = True
-                receipt.save()
+                shown_entry = ShownEntry.objects.get_or_create(entry=e, reader_user=user)[0]
+                shown_entry.save()
 
             user.save()
 
@@ -73,10 +72,9 @@ def click(request):
     clicked_entry = Entry.objects.get(link=link) # FIXME problema com objetos múltiplos
     readEntry = ReadEntry.objects.get_or_create(
         entry=clicked_entry, reader_user=reader_user)[0]
-    receivedEntry = ReceivedEntry.objects.get(
-        entry=clicked_entry,
-        reader_user=reader_user)
-    receivedEntry.showed_to_user = True # caso ainda não tenha sido
+    readEntry.save()
+    receivedEntry = ShownEntry.objects.get_or_create(
+        entry=clicked_entry, reader_user=reader_user)[0]
     receivedEntry.save()
     # if user.entries_recommended.filter(entry=clicked_entry).exists():
     #     er = user.entries_recommended.get(entry=clicked_entry)
@@ -112,10 +110,6 @@ def index(request):
                 if feed_sub_form.is_valid():
                     feed = rss.fetch_feed(feed_sub_form.cleaned_data['link'])[0]
                     reader_user.feeds.add(feed)
-                    for e in Entry.objects.filter(feed=feed).order_by('-pub_date'):
-                        received_entry = ReceivedEntry.objects.get_or_create(entry=e, reader_user=reader_user)[0]
-                        received_entry.save()
-                        reader_user.save()
                     # redirecionar para a página do feed recém-assinado
                     redirect('/reader/feed?address=' + urlquote(feed.address))
             elif 'subscription-cancelation' in request.POST:
@@ -129,12 +123,14 @@ def index(request):
         if RecommendedEntry.objects.filter(reader_user=reader_user).count() >= 3:
             recommended_entries = random.sample(
                 RecommendedEntry.objects.filter(reader_user=reader_user), 3)
-        if ReceivedEntry.objects.filter(reader_user=reader_user).count() >= 3:
-            recent_entries = ReceivedEntry.objects.filter(
-                reader_user=reader_user).order_by('-entry__pub_date')[:3]
-
-        for r in recent_entries:
-            r.showed_to_user = True
+        if Entry.objects.filter(feed__in=feed_list).count() >= 3:
+            recent_entries = Entry.objects.filter(
+                feed__in=feed_list).order_by('-pub_date')[:3]
+            for entry in recent_entries:
+                shown_entry = ShownEntry.objects.get_or_create(
+                    reader_user=reader_user,
+                    entry=entry)[0]
+                shown_entry.save()
 
         context_dict = {
             'user': reader_user,
@@ -210,9 +206,6 @@ def feed_page(request):
             if feed_sub_form.is_valid():
                 feed = rss.fetch_feed(feed_sub_form.cleaned_data['link'])[0]
                 reader_user.feeds.add(feed)
-                for e in Entry.objects.filter(feed=feed).order_by('-pub_date'):
-                    received_entry = ReceivedEntry.objects.get_or_create(entry=e, reader_user=reader_user)[0]
-                    received_entry.save()
                 reader_user.save()
                 # redirecionar para a página do feed recém-assinado
                 redirect('/reader/feed?address=' + urlquote(feed.address))
@@ -234,9 +227,8 @@ def feed_page(request):
         feed_sub_form = FeedSubscriptionForm(auto_id='feed-%s')
 
     if feed != None:
-        received_entries = ReceivedEntry.objects.filter(
-            entry__feed=feed,
-            reader_user=reader_user).order_by('-entry__pub_date')
+        received_entries = Entry.objects.filter(
+            feed=feed).order_by('-pub_date')
         paginator = Paginator(received_entries, 15)
 
         try:
@@ -246,23 +238,27 @@ def feed_page(request):
         except EmptyPage:
             to_be_shown = paginator.page(paginator.num_pages)
     
-        if ReceivedEntry.objects.filter(
-                reader_user=reader_user,
-                showed_to_user=True).exists():
+        if ShownEntry.objects.filter(
+                reader_user=reader_user).exists():
             read_entries = ReadEntry.objects.filter(reader_user=reader_user, entry__feed=feed)
             classifier = train_nb(reader_user, to_be_shown, feed=feed)
             # classify stuff
             for receipt in [
                     r
                     for r in to_be_shown
-                    if r.entry not in [e.entry for e in read_entries]]:
-                label = classify(receipt.entry, classifier)
-                print receipt, label
-                receipt.showed_to_user = True
+                    if r not in [e.entry for e in read_entries]]:
+                label = classify(receipt, classifier)
+                #print receipt, label
                 receipt.save()
                 if label == 'interesting':
-                    recommended = RecommendedEntry.objects.get_or_create(entry=receipt.entry, reader_user=reader_user)[0]
+                    recommended = RecommendedEntry.objects.get_or_create(entry=receipt, reader_user=reader_user)[0]
                     recommended_entries.append(recommended.entry)
+
+        for entry in to_be_shown:
+            ShownEntry.objects.get_or_create(reader_user=reader_user,
+                                             entry=entry)[0].save()
+            if ReadEntry.objects.filter(reader_user=reader_user, entry=entry).exists():
+                print entry
 
     context_dict = {
         'user': reader_user,

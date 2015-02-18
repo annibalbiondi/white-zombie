@@ -7,7 +7,7 @@ from reader.naive_bayes import NaiveBayesClassifier
 from reader.positive_naive_bayes import PositiveNaiveBayesClassifier
 #from reader.svm import SvmClassifier
 from nltk.tokenize import RegexpTokenizer
-from reader.models import ReaderUser, Entry, ReadEntry, ReceivedEntry, Feed
+from reader.models import ReaderUser, Entry, ReadEntry, ShownEntry, Feed
 
 locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
@@ -45,7 +45,7 @@ def slugify(text):
                              0, re.UNICODE))
 
 def get_word_features(user):
-    received_entries = ReceivedEntry.objects.filter(reader_user=user)
+    received_entries = ShownEntry.objects.filter(reader_user=user)
     all_title_words = []
     all_description_words = []
     for r in received_entries:
@@ -72,23 +72,17 @@ def extract_features(entry):
 
 
 def train_nb(user, to_be_shown, feed=None):
-    print to_be_shown
     get_word_features(user)
 
-    shown_receipts = ReceivedEntry.objects.filter(
-        reader_user=user,
-        showed_to_user=True)
+    shown_entries = ShownEntry.objects.filter(
+        reader_user=user)
     read_entries = ReadEntry.objects.filter(
-        reader_user=user,
-        entry__in=[
-            r.entry
-            for r in shown_receipts
-        ])
+        reader_user=user)
     read_entries = [r.entry for r in read_entries]
     unread_entries = [r.entry
-                      for r in shown_receipts
+                      for r in shown_entries
                       if r.entry not in read_entries
-                      and r not in to_be_shown]
+                      and r.entry not in to_be_shown]
     user_featureset = []
     
     for e in read_entries:

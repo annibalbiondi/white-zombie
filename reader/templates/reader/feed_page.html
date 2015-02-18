@@ -17,19 +17,19 @@
         {% for e in entries %}
         <div class="entry">
           <div>
-	    <a target="_blank" href="{% url 'click' %}?url={{ e.entry.link|urlencode }}">
+	    <a target="_blank" href="{% url 'click' %}?url={{ e.link|urlencode }}">
               <h2>
-	        {% if e.entry in recommended_entries %}
-	        ***{{ e.entry.title }}***
+	        {% if e in recommended_entries %}
+	        ***{{ e.title }}***
 	        {% else %}
-	        {{ e.entry.title }}
+	        {{ e.title }}
 	        {% endif %}
               </h2>
 	    </a>
-            <p>{{ e.entry.pub_date }}</p>
+            <p>{{ e.pub_date }}</p>
           </div>
           <div>
-	    {{ e.entry.description|safe }}
+	    {{ e.description|safe }}
           </div>
         </div>
         {% endfor %}
@@ -53,9 +53,6 @@
       <div class="feed-header">
         <p>Nenhum feed foi selecionado!</p>
         <div>
-          <span>Ordenar por:</span>
-          <button type="button" class="btn btn-link">Data</button>
-          <button type="button" class="btn btn-link">Recomendação</button>
         </div>
         <p>Nada para ver aqui...</p>
       </div>
