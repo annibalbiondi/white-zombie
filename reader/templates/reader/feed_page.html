@@ -17,7 +17,7 @@
         {% for e in entries %}
         <div class="entry">
           <div>
-	    <a target="_blank" href="{% url 'click' %}?url={{ e.link|urlencode }}">
+	    <a target="_blank" href="{% url 'click' %}?id={{ e.id|urlencode }}">
               <h2>
 	        {% if e in recommended_entries %}
 	        ***{{ e.title }}***

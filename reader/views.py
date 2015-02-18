@@ -68,18 +68,22 @@ def click(request):
 
     user = User.objects.get(username=request.session['user'])
     reader_user = user.reader_user
-    link = request.GET['url']
-    clicked_entry = Entry.objects.get(link=link) # FIXME problema com objetos múltiplos
-    readEntry = ReadEntry.objects.get_or_create(
+    entry_id = request.GET['id']
+    clicked_entry = Entry.objects.get(id=entry_id)
+    link = clicked_entry.link
+    read_entry = ReadEntry.objects.get_or_create(
         entry=clicked_entry, reader_user=reader_user)[0]
-    readEntry.save()
-    receivedEntry = ShownEntry.objects.get_or_create(
+    read_entry.save()
+    shown_entry = ShownEntry.objects.get_or_create(
         entry=clicked_entry, reader_user=reader_user)[0]
-    receivedEntry.save()
-    # if user.entries_recommended.filter(entry=clicked_entry).exists():
-    #     er = user.entries_recommended.get(entry=clicked_entry)
-    #     user.entries_recommended.remove(er)
-    #     er.delete()
+    shown_entry.save()
+    if RecommendedEntry.objects.filter(
+            reader_user=reader_user,
+            entry=clicked_entry).exists():
+        er = RecommendedEntry.objects.get(
+            reader_user=reader_user,
+            entry=clicked_entry)
+        er.delete()
     return redirect(link)
 
 

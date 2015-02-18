@@ -18,15 +18,11 @@
       <li>
 	<a href="click?user={{ user.email }}&url={{ e.link }}">
 	  {% if e in entries_read %}
-	  {% if e in entries_recommended %}
 	  <strike>{{ e.title }}</strike>
-	  {% else %}
-	  {{ e.title }}
-	  {% endif %}
 	  {% elif e in entries_recommended %}
-	  <em>{{ e.title }}</em>
-	  {% else %}
 	  <strong>{{ e.title }}</strong>
+          {% else %}
+          {{ e.title }}
 	  {% endif %}
 	</a>
       </li>

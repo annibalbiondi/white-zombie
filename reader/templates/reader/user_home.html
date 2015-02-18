@@ -7,7 +7,7 @@
       {% for e in recommended_entries %}
       <div class="entry">
         <div>
-	  <a target="_blank" href="{% url 'click' %}?url={{ e.entry.link|urlencode }}">
+	  <a target="_blank" href="{% url 'click' %}?id={{ e.entry.id|urlencode }}">
             <h3>{{ e.entry.title }}</h3>
 	  </a>
           <p>{{ e.entry.pub_date }}</p>
@@ -28,7 +28,7 @@
     {% for e in recent_entries %}
     <div class="entry"> <!-- TODO exibir feed ao qual cada notícia értence -->
       <div>
-	<a target="_blank" href="{% url 'click' %}?url={{ e.link|urlencode }}">
+	<a target="_blank" href="{% url 'click' %}?id={{ e.id|urlencode }}">
           <h3>{{ e.title }}</h3>
 	</a>
       </div>
