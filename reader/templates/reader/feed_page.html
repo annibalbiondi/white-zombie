@@ -20,7 +20,7 @@
 	    <a target="_blank" href="{% url 'click' %}?id={{ e.id|urlencode }}">
               <h2>
 	        {% if e in recommended_entries %}
-	        ***{{ e.title }}***
+	        <strong>{{ e.title }}</strong>
 	        {% else %}
 	        {{ e.title }}
 	        {% endif %}

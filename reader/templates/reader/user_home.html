@@ -3,7 +3,7 @@
 {% block content %}
   <div class="recommended col-md-5">
     <h2>Notícias recomendadas</h2>
-    <div class="entry-list"> <!-- TODO exibir feed ao qual cada notícia értence -->
+    <div class="entry-list">
       {% for e in recommended_entries %}
       <div class="entry">
         <div>
@@ -26,7 +26,7 @@
   <div class="most-recent col-md-4">
     <h2>Últimas notícias</h2>
     {% for e in recent_entries %}
-    <div class="entry"> <!-- TODO exibir feed ao qual cada notícia értence -->
+    <div class="entry">
       <div>
 	<a target="_blank" href="{% url 'click' %}?id={{ e.id|urlencode }}">
           <h3>{{ e.title }}</h3>
