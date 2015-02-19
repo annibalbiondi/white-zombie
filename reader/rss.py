@@ -92,6 +92,7 @@ def fetch_entries(d, feed):
             comments=comments,
             pub_date=pub_date,
             feed=feed)[0]
+        entry.save()
 
         entries.append(entry)
     return entries

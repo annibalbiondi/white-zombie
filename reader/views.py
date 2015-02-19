@@ -114,6 +114,7 @@ def index(request):
                 if feed_sub_form.is_valid():
                     feed = rss.fetch_feed(feed_sub_form.cleaned_data['link'])[0]
                     reader_user.feeds.add(feed)
+                    reader_user.save()
                     # redirecionar para a página do feed recém-assinado
                     redirect('/reader/feed?address=' + urlquote(feed.address))
             elif 'subscription-cancelation' in request.POST:
@@ -244,7 +245,9 @@ def feed_page(request):
     
         if ShownEntry.objects.filter(
                 reader_user=reader_user).exists():
-            read_entries = ReadEntry.objects.filter(reader_user=reader_user, entry__feed=feed)
+            read_entries = ReadEntry.objects.filter(
+                reader_user=reader_user,
+                entry__feed=feed)
             classifier = train_nb(reader_user, to_be_shown, feed=feed)
             # classify stuff
             for receipt in [
@@ -255,14 +258,21 @@ def feed_page(request):
                 #print receipt, label
                 receipt.save()
                 if label == 'interesting':
-                    recommended = RecommendedEntry.objects.get_or_create(entry=receipt, reader_user=reader_user)[0]
+                    recommended = RecommendedEntry.objects.get_or_create(
+                        entry=receipt,
+                        reader_user=reader_user)[0]
+                    recommended.save()
                     recommended_entries.append(recommended.entry)
+                elif RecommendedEntry.objects.filter(
+                        reader_user=reader_user,
+                        entry=receipt).exists():
+                    RecommendedEntry.objects.filter(
+                        reader_user=reader_user,
+                        entry=receipt).delete()
 
         for entry in to_be_shown:
             ShownEntry.objects.get_or_create(reader_user=reader_user,
                                              entry=entry)[0].save()
-            if ReadEntry.objects.filter(reader_user=reader_user, entry=entry).exists():
-                print entry
 
     context_dict = {
         'user': reader_user,
