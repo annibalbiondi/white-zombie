@@ -3,11 +3,11 @@
 {% block content %}
   <div class="recommended col-md-5">
     <h2>Notícias recomendadas</h2>
-    <div class="entry-list"> <!-- TODO exibir feed ao qual cada notícia értence -->
+    <div class="entry-list">
       {% for e in recommended_entries %}
       <div class="entry">
         <div>
-	  <a target="_blank" href="{% url 'click' %}?url={{ e.entry.link|urlencode }}">
+	  <a target="_blank" href="{% url 'click' %}?id={{ e.entry.id|urlencode }}">
             <h3>{{ e.entry.title }}</h3>
 	  </a>
           <p>{{ e.entry.pub_date }}</p>
@@ -26,16 +26,16 @@
   <div class="most-recent col-md-4">
     <h2>Últimas notícias</h2>
     {% for e in recent_entries %}
-    <div class="entry"> <!-- TODO exibir feed ao qual cada notícia értence -->
+    <div class="entry">
       <div>
-	<a target="_blank" href="{% url 'click' %}?url={{ e.entry.link|urlencode }}">
-          <h3>{{ e.entry.title }}</h3>
+	<a target="_blank" href="{% url 'click' %}?id={{ e.id|urlencode }}">
+          <h3>{{ e.title }}</h3>
 	</a>
       </div>
-      <p>{{ e.entry.description|safe }}</p>
+      <p>{{ e.description|safe }}</p>
       <p>de 
-        <a href="{% url 'feed_page' %}?address={{ e.entry.feed.address|urlencode }}">
-          {{ e.entry.feed.title }}
+        <a href="{% url 'feed_page' %}?address={{ e.feed.address|urlencode }}">
+          {{ e.feed.title }}
         </a>
       </p>
     </div>
