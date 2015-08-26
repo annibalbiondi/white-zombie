@@ -13,7 +13,6 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 TEMPLATE_PATH = os.path.join(BASE_DIR, 'templates')
 STATIC_PATH = os.path.join(BASE_DIR, 'static')
-DATABASE_PATH = os.path.join(BASE_DIR, 'reader.db')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
@@ -60,8 +59,12 @@ WSGI_APPLICATION = 'poc_project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': DATABASE_PATH,
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'policlipping',
+        'USER': 'policlipping',
+        'PASSWORD': 'policlipping',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
     }
 }
 
